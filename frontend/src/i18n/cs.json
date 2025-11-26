@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "AI Realitni Agent",
+    "subtitle": "Globalni analyza investic do nemovitosti",
+    "addButton": "Pridat",
+    "objectsCount": "nemovitosti"
+  },
+  "empty": {
+    "title": "Portfolio je prazdne",
+    "description": "Nahrajte PDF dokumenty o nemovitostech - AI automaticky extrahuje data a vyhodnoti rizika",
+    "addFirst": "Pridat prvni nemovitost"
+  },
+  "objects": {
+    "title": "Nemovitosti",
+    "price": "Cena",
+    "completion": "Dokonceni"
+  },
+  "upload": {
+    "title": "Pridat nemovitost",
+    "description": "Nahrajte PDF dokumenty. AI extrahuje data a vyhodnoti rizika.",
+    "dropzone": "Pretahnete PDF soubory sem",
+    "or": "nebo kliknete pro vyber",
+    "files": "Soubory",
+    "upload": "Nahrat",
+    "analyzing": "Analyzuji..."
+  },
+  "risk": {
+    "title": "Skore rizika",
+    "low": "Nizke",
+    "medium": "Stredni",
+    "high": "Vysoke",
+    "risk": "riziko",
+    "safe": "Bezpecne",
+    "dangerous": "Nebezpecne",
+    "showDetails": "Zobrazit detaily",
+    "hideDetails": "Skryt detaily",
+    "recommendations": "Doporuceni",
+    "assess": "Vyhodnotit riziko",
+    "assessing": "Vyhodnocuji...",
+    "factors": {
+      "developer": "Developer",
+      "timeline": "Casova osa",
+      "price": "Cena",
+      "location": "Lokalita",
+      "liquidity": "Likvidita"
+    }
+  },
+  "correction": {
+    "title": "Upresnit data",
+    "description": "Popiste co je treba opravit. AI analyzuje a aktualizuje.",
+    "currentData": "Aktualni data",
+    "placeholder": "Priklad: Datum dokonceni je vlastne Q2 2026...",
+    "examples": "Priklady",
+    "cancel": "Zrusit",
+    "apply": "Pouzit",
+    "processing": "Zpracovavam..."
+  },
+  "analysis": {
+    "title": "Analyza",
+    "overview": "Prehled",
+    "news": "Novinky",
+    "growth": "Rust",
+    "risks": "Rizika",
+    "regions": "Regiony",
+    "timeline": "Casova osa",
+    "customQuestion": "Vlastni dotaz",
+    "placeholder": "Priklad: Mam prodat za 2 roky?",
+    "results": "Vysledky",
+    "analyzing": "Analyzuji...",
+    "selectAnalysis": "Vyberte typ analyzy"
+  },
+  "stats": {
+    "cost": "Naklady",
+    "pricePerSqft": "Cena/ft2",
+    "developer": "Developer",
+    "corrections": "opravy"
+  },
+  "labels": {
+    "name": "Nazev",
+    "location": "Lokalita",
+    "type": "Typ",
+    "area": "Plocha"
+  }
+}

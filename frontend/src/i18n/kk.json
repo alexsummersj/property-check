@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "AI Zhyljymaityn mulik agenti",
+    "subtitle": "Zhahandardyk zhyljymaityn mulik investiciyalaryn taldau",
+    "addButton": "Kosu",
+    "objectsCount": "mulik"
+  },
+  "empty": {
+    "title": "Portfolio bos",
+    "description": "PDF kujattardy juktengiz - AI derekterdi avtomatty turde shygarady jane tauekeldierdi bagalaydy",
+    "addFirst": "Birinshi mulikti kosu"
+  },
+  "objects": {
+    "title": "Zhyljymaityn mulik",
+    "price": "Baga",
+    "completion": "Ayaktaluy"
+  },
+  "upload": {
+    "title": "Mulik kosu",
+    "description": "PDF kujattardy juktengiz. AI derekterdi shygarady jane tauekeldierdi bagalaydy.",
+    "dropzone": "PDF faildaryn osinda suyirengiz",
+    "or": "nemese tandau ushin basynyz",
+    "files": "Faildar",
+    "upload": "Jukteu",
+    "analyzing": "Taldau..."
+  },
+  "risk": {
+    "title": "Tauekel korsetkishi",
+    "low": "Tomen",
+    "medium": "Ortasha",
+    "high": "Zhogary",
+    "risk": "tauekel",
+    "safe": "Kauipsiz",
+    "dangerous": "Kauipti",
+    "showDetails": "Malimietterdi korsetu",
+    "hideDetails": "Malimietterdi zhasyru",
+    "recommendations": "Usynystar",
+    "assess": "Tauekeldi bagalau",
+    "assessing": "Bagalau...",
+    "factors": {
+      "developer": "Kurylysshy",
+      "timeline": "Uakyt kestesi",
+      "price": "Baga",
+      "location": "Ornalaskan zheri",
+      "liquidity": "Otimdiilik"
+    }
+  },
+  "correction": {
+    "title": "Derekterdi naktylau",
+    "description": "Neni tuzetu kerektigin sipattanyz. AI taldap zhanartady.",
+    "currentData": "Agymdagy derekter",
+    "placeholder": "Mysaly: Ayaktaluy kuni Q2 2026...",
+    "examples": "Mysaldar",
+    "cancel": "Boldyrmau",
+    "apply": "Koldanu",
+    "processing": "Ondeu..."
+  },
+  "analysis": {
+    "title": "Taldau",
+    "overview": "Sholu",
+    "news": "Zhanalyktor",
+    "growth": "Osu",
+    "risks": "Tauekelder",
+    "regions": "Aimaktar",
+    "timeline": "Uakyt kestesi",
+    "customQuestion": "Oz suragynyz",
+    "placeholder": "Mysaly: 2 zhyldan keyin satuym kerek pe?",
+    "results": "Natizheler",
+    "analyzing": "Taldau...",
+    "selectAnalysis": "Taldau turin tandanyz"
+  },
+  "stats": {
+    "cost": "Kuny",
+    "pricePerSqft": "Baga/sharshi fut",
+    "developer": "Kurylysshy",
+    "corrections": "tuzetuler"
+  },
+  "labels": {
+    "name": "Atayy",
+    "location": "Ornalasuy",
+    "type": "Turi",
+    "area": "Aumagy"
+  }
+}

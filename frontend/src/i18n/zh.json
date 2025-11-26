@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "AI房产经纪人",
+    "subtitle": "全球房地产投资分析",
+    "addButton": "添加",
+    "objectsCount": "个房产"
+  },
+  "empty": {
+    "title": "投资组合为空",
+    "description": "上传房产PDF文档 - AI将自动提取数据并评估风险",
+    "addFirst": "添加第一个房产"
+  },
+  "objects": {
+    "title": "房产",
+    "price": "价格",
+    "completion": "交付"
+  },
+  "upload": {
+    "title": "添加房产",
+    "description": "上传PDF文档。AI将提取数据并评估风险。",
+    "dropzone": "将PDF文件拖放到此处",
+    "or": "或点击选择",
+    "files": "文件",
+    "upload": "上传",
+    "analyzing": "分析中..."
+  },
+  "risk": {
+    "title": "风险评分",
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "risk": "风险",
+    "safe": "安全",
+    "dangerous": "危险",
+    "showDetails": "显示详情",
+    "hideDetails": "隐藏详情",
+    "recommendations": "建议",
+    "assess": "评估风险",
+    "assessing": "评估中...",
+    "factors": {
+      "developer": "开发商",
+      "timeline": "时间线",
+      "price": "价格",
+      "location": "位置",
+      "liquidity": "流动性"
+    }
+  },
+  "correction": {
+    "title": "更新数据",
+    "description": "描述需要更正的内容。AI将分析并更新。",
+    "currentData": "当前数据",
+    "placeholder": "例如：交付日期是2026年Q2...",
+    "examples": "示例",
+    "cancel": "取消",
+    "apply": "应用",
+    "processing": "处理中..."
+  },
+  "analysis": {
+    "title": "分析",
+    "overview": "概述",
+    "news": "新闻",
+    "growth": "增长",
+    "risks": "风险",
+    "regions": "区域",
+    "timeline": "时间线",
+    "customQuestion": "自定义问题",
+    "placeholder": "例如：2年后应该卖掉吗？",
+    "results": "结果",
+    "analyzing": "分析中...",
+    "selectAnalysis": "选择分析类型"
+  },
+  "stats": {
+    "cost": "成本",
+    "pricePerSqft": "每平方英尺",
+    "developer": "开发商",
+    "corrections": "次更正"
+  },
+  "labels": {
+    "name": "名称",
+    "location": "位置",
+    "type": "类型",
+    "area": "面积"
+  }
+}

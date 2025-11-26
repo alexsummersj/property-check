@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "AI Real Estate Agent",
+    "subtitle": "Global Real Estate Investment Analysis",
+    "addButton": "Add",
+    "objectsCount": "property(s)"
+  },
+  "empty": {
+    "title": "Portfolio is empty",
+    "description": "Upload PDF documents about real estate — AI will automatically extract data and assess risks",
+    "addFirst": "Add first property"
+  },
+  "objects": {
+    "title": "Properties",
+    "price": "Price",
+    "completion": "Completion"
+  },
+  "upload": {
+    "title": "Add property",
+    "description": "Upload PDF documents. AI will extract data and assess risk.",
+    "dropzone": "Drop PDF files here",
+    "or": "or click to select",
+    "files": "Files",
+    "upload": "Upload",
+    "analyzing": "Analyzing..."
+  },
+  "risk": {
+    "title": "Risk Score",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "risk": "risk",
+    "safe": "Safe",
+    "dangerous": "Dangerous",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "recommendations": "Recommendations",
+    "assess": "Assess risk",
+    "assessing": "Assessing...",
+    "factors": {
+      "developer": "Developer",
+      "timeline": "Timeline",
+      "price": "Price",
+      "location": "Location",
+      "liquidity": "Liquidity"
+    }
+  },
+  "correction": {
+    "title": "Refine data",
+    "description": "Describe what needs correction. AI will analyze and update property info.",
+    "currentData": "Current data",
+    "placeholder": "Example: Completion date is actually Q2 2026...",
+    "examples": "Example refinements",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "processing": "Processing..."
+  },
+  "analysis": {
+    "title": "Analysis",
+    "overview": "Overview",
+    "news": "News",
+    "growth": "Growth",
+    "risks": "Risks",
+    "regions": "Regions",
+    "timeline": "Timeline",
+    "customQuestion": "Custom question",
+    "placeholder": "Example: Should I sell in 2 years?",
+    "results": "Results",
+    "analyzing": "Analyzing...",
+    "selectAnalysis": "Select analysis type"
+  },
+  "stats": {
+    "cost": "Cost",
+    "pricePerSqft": "Price/sq.ft",
+    "developer": "Developer",
+    "corrections": "correction(s)"
+  },
+  "labels": {
+    "name": "Name",
+    "location": "Location",
+    "type": "Type",
+    "area": "Area"
+  }
+}

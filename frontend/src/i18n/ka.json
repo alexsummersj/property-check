@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "AI udzravi konebis agenti",
+    "subtitle": "Globaluri udzravi konebis investiciebis analizi",
+    "addButton": "Damateba",
+    "objectsCount": "obiekti"
+  },
+  "empty": {
+    "title": "Portfolio carieli",
+    "description": "Atvirthet PDF dokumentebi udzravi konebis shesakheb - AI avtomaturad amoighebs monacemebs da sheafasebs riskebs",
+    "addFirst": "Pirveli obiektis damateba"
+  },
+  "objects": {
+    "title": "Obiektebi",
+    "price": "Fasi",
+    "completion": "Dasruleba"
+  },
+  "upload": {
+    "title": "Obiektis damateba",
+    "description": "Atvirthet PDF dokumentebi. AI amoighebs monacemebs da sheafasebs riskebs.",
+    "dropzone": "Gadmoitanet PDF failebi ak",
+    "or": "an daakliknet asarchevad",
+    "files": "Failebi",
+    "upload": "Atvirtva",
+    "analyzing": "Analizi..."
+  },
+  "risk": {
+    "title": "Riskis kula",
+    "low": "Dabali",
+    "medium": "Sashualo",
+    "high": "Maghali",
+    "risk": "riski",
+    "safe": "Usafrtkho",
+    "dangerous": "Sashishi",
+    "showDetails": "Detalebis chveneba",
+    "hideDetails": "Detalebis damalva",
+    "recommendations": "Rekomendaciebi",
+    "assess": "Riskis shefaseba",
+    "assessing": "Shefaseba...",
+    "factors": {
+      "developer": "Developeri",
+      "timeline": "Vadebi",
+      "price": "Fasi",
+      "location": "Mdebareoba",
+      "liquidity": "Likviduroba"
+    }
+  },
+  "correction": {
+    "title": "Monacemebis dazusteba",
+    "description": "Aghtserit ra sachiroebs shescorebas. AI gaanalizbs da ganaakhlebs.",
+    "currentData": "Mimdinare monacemebi",
+    "placeholder": "Magalitad: Dasrulebis tarigi Q2 2026...",
+    "examples": "Magalitebi",
+    "cancel": "Gaukmeba",
+    "apply": "Gamoyeneba",
+    "processing": "Damushaveba..."
+  },
+  "analysis": {
+    "title": "Analizi",
+    "overview": "Mimokhinlva",
+    "news": "Siakhleebi",
+    "growth": "Zrda",
+    "risks": "Riskebi",
+    "regions": "Regionebi",
+    "timeline": "Vadebi",
+    "customQuestion": "Sakutari kitkva",
+    "placeholder": "Magalitad: Unda gavyido 2 tselshi?",
+    "results": "Shedegebi",
+    "analyzing": "Analizi...",
+    "selectAnalysis": "Airchiet analizis tipi"
+  },
+  "stats": {
+    "cost": "Ghirebleba",
+    "pricePerSqft": "Fasi/kv.futi",
+    "developer": "Developeri",
+    "corrections": "shescoereba"
+  },
+  "labels": {
+    "name": "Sakheli",
+    "location": "Mdebareoba",
+    "type": "Tipi",
+    "area": "Fartobi"
+  }
+}

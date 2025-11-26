@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "Agente Immobiliare IA",
+    "subtitle": "Analisi globale degli investimenti immobiliari",
+    "addButton": "Aggiungi",
+    "objectsCount": "proprietà"
+  },
+  "empty": {
+    "title": "Portfolio vuoto",
+    "description": "Carica documenti PDF immobiliari — l'IA estrarrà automaticamente i dati e valuterà i rischi",
+    "addFirst": "Aggiungi prima proprietà"
+  },
+  "objects": {
+    "title": "Proprietà",
+    "price": "Prezzo",
+    "completion": "Consegna"
+  },
+  "upload": {
+    "title": "Aggiungi proprietà",
+    "description": "Carica documenti PDF. L'IA estrarrà i dati e valuterà i rischi.",
+    "dropzone": "Trascina i file PDF qui",
+    "or": "o clicca per selezionare",
+    "files": "File",
+    "upload": "Carica",
+    "analyzing": "Analisi..."
+  },
+  "risk": {
+    "title": "Punteggio di Rischio",
+    "low": "Basso",
+    "medium": "Medio",
+    "high": "Alto",
+    "risk": "rischio",
+    "safe": "Sicuro",
+    "dangerous": "Pericoloso",
+    "showDetails": "Mostra dettagli",
+    "hideDetails": "Nascondi dettagli",
+    "recommendations": "Raccomandazioni",
+    "assess": "Valuta rischio",
+    "assessing": "Valutazione...",
+    "factors": {
+      "developer": "Sviluppatore",
+      "timeline": "Tempistiche",
+      "price": "Prezzo",
+      "location": "Posizione",
+      "liquidity": "Liquidità"
+    }
+  },
+  "correction": {
+    "title": "Affina dati",
+    "description": "Descrivi cosa deve essere corretto. L'IA analizzerà e aggiornerà.",
+    "currentData": "Dati attuali",
+    "placeholder": "Esempio: La data di consegna è Q2 2026...",
+    "examples": "Esempi",
+    "cancel": "Annulla",
+    "apply": "Applica",
+    "processing": "Elaborazione..."
+  },
+  "analysis": {
+    "title": "Analisi",
+    "overview": "Panoramica",
+    "news": "Notizie",
+    "growth": "Crescita",
+    "risks": "Rischi",
+    "regions": "Regioni",
+    "timeline": "Tempistiche",
+    "customQuestion": "Domanda personalizzata",
+    "placeholder": "Esempio: Dovrei vendere tra 2 anni?",
+    "results": "Risultati",
+    "analyzing": "Analisi...",
+    "selectAnalysis": "Seleziona tipo di analisi"
+  },
+  "stats": {
+    "cost": "Costo",
+    "pricePerSqft": "Prezzo/piede²",
+    "developer": "Sviluppatore",
+    "corrections": "correzione(i)"
+  },
+  "labels": {
+    "name": "Nome",
+    "location": "Posizione",
+    "type": "Tipo",
+    "area": "Superficie"
+  }
+}

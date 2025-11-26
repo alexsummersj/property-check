@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "وكيل العقارات الذكي",
+    "subtitle": "تحليل الاستثمارات العقارية العالمية",
+    "addButton": "إضافة",
+    "objectsCount": "عقار(ات)"
+  },
+  "empty": {
+    "title": "المحفظة فارغة",
+    "description": "قم بتحميل مستندات PDF — سيقوم الذكاء الاصطناعي باستخراج البيانات وتقييم المخاطر",
+    "addFirst": "إضافة أول عقار"
+  },
+  "objects": {
+    "title": "العقارات",
+    "price": "السعر",
+    "completion": "التسليم"
+  },
+  "upload": {
+    "title": "إضافة عقار",
+    "description": "قم بتحميل مستندات PDF. سيقوم AI باستخراج البيانات وتقييم المخاطر.",
+    "dropzone": "اسحب ملفات PDF هنا",
+    "or": "أو انقر للاختيار",
+    "files": "الملفات",
+    "upload": "تحميل",
+    "analyzing": "جاري التحليل..."
+  },
+  "risk": {
+    "title": "درجة المخاطرة",
+    "low": "منخفض",
+    "medium": "متوسط",
+    "high": "مرتفع",
+    "risk": "خطر",
+    "safe": "آمن",
+    "dangerous": "خطير",
+    "showDetails": "عرض التفاصيل",
+    "hideDetails": "إخفاء التفاصيل",
+    "recommendations": "التوصيات",
+    "assess": "تقييم المخاطر",
+    "assessing": "جاري التقييم...",
+    "factors": {
+      "developer": "المطور",
+      "timeline": "الجدول الزمني",
+      "price": "السعر",
+      "location": "الموقع",
+      "liquidity": "السيولة"
+    }
+  },
+  "correction": {
+    "title": "تحديث البيانات",
+    "description": "صف ما يحتاج تصحيح. سيقوم AI بالتحليل والتحديث.",
+    "currentData": "البيانات الحالية",
+    "placeholder": "مثال: تاريخ التسليم هو Q2 2026...",
+    "examples": "أمثلة",
+    "cancel": "إلغاء",
+    "apply": "تطبيق",
+    "processing": "جاري المعالجة..."
+  },
+  "analysis": {
+    "title": "التحليل",
+    "overview": "نظرة عامة",
+    "news": "الأخبار",
+    "growth": "النمو",
+    "risks": "المخاطر",
+    "regions": "المناطق",
+    "timeline": "الجدول الزمني",
+    "customQuestion": "سؤال مخصص",
+    "placeholder": "مثال: هل يجب أن أبيع خلال عامين؟",
+    "results": "النتائج",
+    "analyzing": "جاري التحليل...",
+    "selectAnalysis": "اختر نوع التحليل"
+  },
+  "stats": {
+    "cost": "التكلفة",
+    "pricePerSqft": "السعر/قدم²",
+    "developer": "المطور",
+    "corrections": "تحديث(ات)"
+  },
+  "labels": {
+    "name": "الاسم",
+    "location": "الموقع",
+    "type": "النوع",
+    "area": "المساحة"
+  }
+}

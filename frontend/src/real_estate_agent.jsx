@@ -1,0 +1,1040 @@
+import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
+import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe } from 'lucide-react';
+import { translations, languages, getTranslation } from './i18n';
+
+// Умное определение валюты по локации
+const formatPrice = (price, location) => {
+  if (!price) return 'N/A';
+  const loc = (location || '').toLowerCase();
+  let symbol = '$';
+  if (loc.includes('dubai') || loc.includes('abu dhabi') || loc.includes('uae')) {
+    symbol = 'AED ';
+  } else if (loc.includes('london') || loc.includes('uk') || loc.includes('england')) {
+    symbol = '£';
+  } else if (loc.includes('spain') || loc.includes('france') || loc.includes('germany') || loc.includes('italy')) {
+    symbol = '€';
+  } else if (loc.includes('russia') || loc.includes('moscow')) {
+    symbol = '₽';
+  } else if (loc.includes('china') || loc.includes('beijing')) {
+    symbol = '¥';
+  } else if (loc.includes('japan') || loc.includes('tokyo')) {
+    symbol = '¥';
+  } else if (loc.includes('thailand') || loc.includes('bangkok')) {
+    symbol = '฿';
+  } else if (loc.includes('kazakhstan') || loc.includes('astana')) {
+    symbol = '₸';
+  } else if (loc.includes('georgia') || loc.includes('tbilisi')) {
+    symbol = '₾';
+  }
+  if (price >= 1000000) {
+    return `${symbol}${(price / 1000000).toFixed(1)}M`;
+  } else if (price >= 1000) {
+    return `${symbol}${(price / 1000).toFixed(0)}K`;
+  }
+  return `${symbol}${price.toLocaleString()}`;
+};
+
+// Language Context
+const LanguageContext = createContext();
+
+const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('useLanguage must be used within LanguageProvider');
+  return context;
+};
+
+const useT = () => {
+  const { language } = useLanguage();
+  return (path) => getTranslation(language, path);
+};
+
+// Language Selector Component
+
+// Language Selector Component with Flag Images
+const LanguageSelector = () => {
+  const { language, setLanguage } = useLanguage();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const currentLang = languages.find(l => l.code === language) || languages[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const FlagImg = ({ country, size = 20 }) => (
+    <img 
+      src={`https://flagcdn.com/w${size}/${country}.png`}
+      srcSet={`https://flagcdn.com/w${size * 2}/${country}.png 2x`}
+      width={size}
+      alt=""
+      className="rounded-sm shadow-sm"
+      style={{ minWidth: size }}
+    />
+  );
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition"
+      >
+        <FlagImg country={currentLang.country} size={20} />
+        <span className="text-sm font-medium hidden sm:inline">{currentLang.name}</span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-52 bg-slate-800 border border-white/20 rounded-xl shadow-xl z-[100] overflow-hidden max-h-[400px] overflow-y-auto">
+          {languages.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => {
+                setLanguage(lang.code);
+                setIsOpen(false);
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition text-left ${
+                language === lang.code ? 'bg-blue-500/20' : ''
+              }`}
+            >
+              <FlagImg country={lang.country} size={24} />
+              <span className="text-sm">{lang.name}</span>
+              {language === lang.code && (
+                <Check className="w-4 h-4 text-blue-400 ml-auto" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Risk Indicator Component
+const RiskIndicator = ({ risk, loading, onRefresh, compact = false }) => {
+  const [expanded, setExpanded] = useState(false);
+  const t = useT();
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-gray-400">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">{t('risk.assessing')}</span>
+      </div>
+    );
+  }
+
+  if (!risk) {
+    return (
+      <button onClick={onRefresh} className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition text-sm">
+        <Shield className="w-4 h-4" />
+        <span>{t('risk.assess')}</span>
+      </button>
+    );
+  }
+
+  const score = risk.overallRisk;
+
+  const getColor = () => {
+    if (score <= 35) return { bg: 'bg-green-500', text: 'text-green-400', label: t('risk.low') };
+    if (score <= 60) return { bg: 'bg-yellow-500', text: 'text-yellow-400', label: t('risk.medium') };
+    return { bg: 'bg-red-500', text: 'text-red-400', label: t('risk.high') };
+  };
+
+  const color = getColor();
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className={`w-3 h-3 rounded-full ${color.bg}`} />
+        <span className={`text-xs font-bold ${color.text}`}>{score}%</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Shield className="w-5 h-5 text-gray-400" />
+          <span className="font-semibold">{t('risk.title')}</span>
+        </div>
+        <button onClick={onRefresh} className="p-1.5 hover:bg-white/10 rounded-lg transition" title="Refresh">
+          <RefreshCw className="w-4 h-4 text-gray-400" />
+        </button>
+      </div>
+
+      <div className="mb-3">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex gap-1">
+            <div className={`w-4 h-4 rounded-full ${score <= 35 ? 'bg-green-500' : 'bg-green-500/30'}`} />
+            <div className={`w-4 h-4 rounded-full ${score > 35 && score <= 60 ? 'bg-yellow-500' : 'bg-yellow-500/30'}`} />
+            <div className={`w-4 h-4 rounded-full ${score > 60 ? 'bg-red-500' : 'bg-red-500/30'}`} />
+          </div>
+          <span className={`text-2xl font-bold ${color.text}`}>{score}%</span>
+          <span className={`text-sm ${color.text}`}>{color.label} {t('risk.risk')}</span>
+        </div>
+
+        <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              score <= 35 ? 'bg-gradient-to-r from-green-600 to-green-400' :
+              score <= 60 ? 'bg-gradient-to-r from-yellow-600 to-yellow-400' :
+              'bg-gradient-to-r from-red-600 to-red-400'
+            }`}
+            style={{ width: `${score}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>10% {t('risk.safe')}</span>
+          <span>100% {t('risk.dangerous')}</span>
+        </div>
+      </div>
+
+      <p className="text-sm text-gray-300 mb-3">{risk.summary}</p>
+
+      <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition">
+        {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        {expanded ? t('risk.hideDetails') : t('risk.showDetails')}
+      </button>
+
+      {expanded && (
+        <div className="mt-4 space-y-3">
+          <div className="space-y-2">
+            {Object.entries(risk.factors).map(([key, factor]) => {
+              const factorColor = factor.score <= 35 ? 'bg-green-500' :
+                                  factor.score <= 60 ? 'bg-yellow-500' : 'bg-red-500';
+
+              return (
+                <div key={key} className="bg-white/5 rounded-lg p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs">{t(`risk.factors.${key}`)}</span>
+                    <span className="text-xs font-bold">{factor.score}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-1">
+                    <div className={`h-full rounded-full ${factorColor}`} style={{ width: `${factor.score}%` }} />
+                  </div>
+                  <p className="text-xs text-gray-400">{factor.reason}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {risk.recommendations?.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold text-gray-400 mb-2">💡 {t('risk.recommendations')}:</p>
+              <ul className="space-y-1">
+                {risk.recommendations.map((rec, i) => (
+                  <li key={i} className="text-xs text-gray-300 flex items-start gap-2">
+                    <span className="text-blue-400">•</span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Empty State Component
+const EmptyState = ({ onAddClick }) => {
+  const t = useT();
+
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
+        <FolderOpen className="w-10 h-10 text-gray-500" />
+      </div>
+      <h3 className="text-xl font-semibold mb-2">{t('empty.title')}</h3>
+      <p className="text-gray-400 mb-6 max-w-sm">{t('empty.description')}</p>
+      <button
+        onClick={onAddClick}
+        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-xl font-medium transition"
+      >
+        <Plus className="w-5 h-5" />
+        <span>{t('empty.addFirst')}</span>
+      </button>
+    </div>
+  );
+};
+
+// Correction Modal Component
+const CorrectionModal = ({ property, onClose, onCorrection, loading }) => {
+  const [text, setText] = useState('');
+  const t = useT();
+
+  const examples = [
+    t('correction.placeholder'),
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Edit3 className="w-5 h-5 text-orange-400" />
+            <h3 className="text-xl font-bold">{t('correction.title')}</h3>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <p className="text-gray-400 text-sm mb-4">{t('correction.description')}</p>
+
+        <div className="bg-white/5 rounded-lg p-3 mb-4 text-xs">
+          <p className="text-gray-400 mb-2">{t('correction.currentData')}:</p>
+          <div className="grid grid-cols-2 gap-2">
+            <div><span className="text-gray-500">{t('labels.name')}:</span> <span className="text-white">{property.name}</span></div>
+            <div><span className="text-gray-500">{t('labels.location')}:</span> <span className="text-white">{property.location}</span></div>
+            <div><span className="text-gray-500">{t('objects.completion')}:</span> <span className="text-white">{property.completion}</span></div>
+            <div><span className="text-gray-500">{t('stats.developer')}:</span> <span className="text-white">{property.developer}</span></div>
+            <div><span className="text-gray-500">{t('objects.price')}:</span> <span className="text-white">{formatPrice(property.price, property.location)}</span></div>
+            <div><span className="text-gray-500">{t('labels.area')}:</span> <span className="text-white">{property.size} SF</span></div>
+          </div>
+        </div>
+
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={t('correction.placeholder')}
+          className="w-full h-24 px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500 resize-none mb-3"
+          disabled={loading}
+        />
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-lg font-medium transition"
+            disabled={loading}
+          >
+            {t('correction.cancel')}
+          </button>
+          <button
+            onClick={() => onCorrection(text)}
+            disabled={loading || !text.trim()}
+            className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('correction.processing')}</span></>
+            ) : (
+              <><Check className="w-5 h-5" /><span>{t('correction.apply')}</span></>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Notification Component
+const UpdateNotification = ({ message, onClose }) => (
+  <div className="fixed bottom-4 right-4 bg-green-500/20 border border-green-500/30 rounded-xl p-4 max-w-sm z-50 animate-pulse">
+    <div className="flex items-start gap-3">
+      <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="text-sm text-green-300">{message}</p>
+      </div>
+      <button onClick={onClose} className="text-green-400 hover:text-green-300">
+        <X className="w-4 h-4" />
+      </button>
+    </div>
+  </div>
+);
+
+// Main Component
+const RealEstateAgentContent = () => {
+  const t = useT();
+  const { language } = useLanguage();
+
+  const [properties, setProperties] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.PROPERTIES);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const [risks, setRisks] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.RISKS);
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [query, setQuery] = useState('');
+  const [error, setError] = useState(null);
+  const [riskLoading, setRiskLoading] = useState({});
+
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const [showCorrectionModal, setShowCorrectionModal] = useState(false);
+  const [correctionLoading, setCorrectionLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.PROPERTIES, JSON.stringify(properties)); } catch {}
+  }, [properties]);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.RISKS, JSON.stringify(risks)); } catch {}
+  }, [risks]);
+
+  useEffect(() => {
+    if (properties.length > 0 && !selectedProperty) {
+      setSelectedProperty(properties[0]);
+    }
+  }, [properties, selectedProperty]);
+
+  const handleCorrection = async (correctionText) => {
+    if (!selectedProperty || !correctionText.trim()) return;
+
+    setCorrectionLoading(true);
+
+    try {
+      const response = await fetch('/api/correct-property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          property: selectedProperty,
+          correction: correctionText
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.correction) {
+        const { updates, explanation, affectsRisk, fieldsChanged } = data.correction;
+
+        if (Object.keys(updates).length > 0) {
+          const updatedProperty = {
+            ...selectedProperty,
+            ...updates,
+            lastCorrected: new Date().toISOString(),
+            corrections: [
+              ...(selectedProperty.corrections || []),
+              { date: new Date().toISOString(), text: correctionText, fields: fieldsChanged }
+            ]
+          };
+
+          setProperties(prev => prev.map(p =>
+            p.id === selectedProperty.id ? updatedProperty : p
+          ));
+          setSelectedProperty(updatedProperty);
+
+          setNotification(explanation);
+          setTimeout(() => setNotification(null), 5000);
+
+          if (affectsRisk) {
+            setTimeout(() => assessRisk(updatedProperty), 500);
+          }
+
+          setShowCorrectionModal(false);
+        } else {
+          setNotification(explanation);
+          setTimeout(() => setNotification(null), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('Correction error:', err);
+      setNotification('Error processing correction');
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setCorrectionLoading(false);
+    }
+  };
+
+  const assessRisk = async (property) => {
+    setRiskLoading(prev => ({ ...prev, [property.id]: true }));
+
+    try {
+      const response = await fetch('/api/assess-risk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ property, language })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.risk) {
+        setRisks(prev => ({ ...prev, [`${property.id}_${language}`]: data.risk }));
+      }
+    } catch (err) {
+      console.error('Risk assessment error:', err);
+    } finally {
+      setRiskLoading(prev => ({ ...prev, [property.id]: false }));
+    }
+  };
+
+  const handleFilesSelected = (fileList) => {
+    const newFiles = Array.from(fileList).filter(file => file.type === 'application/pdf');
+    if (newFiles.length === 0) {
+      setUploadError('Please upload PDF files');
+      return;
+    }
+    setPendingFiles(prev => [...prev, ...newFiles]);
+    setUploadError(null);
+  };
+
+  const removeFile = (index) => setPendingFiles(prev => prev.filter((_, i) => i !== index));
+
+  const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+
+  const handleUploadAll = async () => {
+    if (pendingFiles.length === 0) return;
+
+    setUploadLoading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+
+    try {
+      const filesData = await Promise.all(
+        pendingFiles.map(async (file) => ({
+          pdfBase64: await fileToBase64(file),
+          fileName: file.name
+        }))
+      );
+
+      const response = await fetch('/api/parse-property', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: filesData })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      if (data.success && data.property) {
+        const newProperty = {
+          id: Date.now(),
+          name: data.property.name || 'New Property',
+          location: data.property.location || 'Not specified',
+          type: data.property.type || 'Not specified',
+          price: data.property.price || 0,
+          size: data.property.size || 0,
+          completion: data.property.completion || 'Not specified',
+          developer: data.property.developer || 'Not specified',
+          paymentPlan: data.property.paymentPlan,
+          view: data.property.view,
+          floor: data.property.floor,
+          bedrooms: data.property.bedrooms,
+          bathrooms: data.property.bathrooms,
+          parking: data.property.parking,
+          amenities: data.property.amenities,
+          buyerName: data.property.buyerName,
+          bookingDate: data.property.bookingDate,
+          additionalInfo: data.property.additionalInfo,
+          addedAt: new Date().toISOString(),
+          corrections: []
+        };
+
+        setProperties(prev => [...prev, newProperty]);
+        setSelectedProperty(newProperty);
+        setUploadSuccess(`✅ "${newProperty.name}" added!`);
+        setPendingFiles([]);
+
+        setTimeout(() => assessRisk(newProperty), 500);
+
+        setTimeout(() => {
+          setShowUploadModal(false);
+          setUploadSuccess(null);
+        }, 2000);
+      }
+
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadError(err.message || 'Error uploading files');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleDragOver = (e) => { e.preventDefault(); setDragOver(true); };
+  const handleDragLeave = (e) => { e.preventDefault(); setDragOver(false); };
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); handleFilesSelected(e.dataTransfer.files); };
+  const handleFileSelect = (e) => { if (e.target.files.length > 0) handleFilesSelected(e.target.files); e.target.value = ''; };
+
+  const handleDeleteProperty = (id) => {
+    setProperties(prev => prev.filter(p => p.id !== id));
+    setRisks(prev => { 
+  const newRisks = { ...prev }; 
+  // Удаляем риски для всех языков
+  Object.keys(newRisks).forEach(key => {
+    if (key.startsWith(`${id}_`)) delete newRisks[key];
+  });
+  return newRisks; 
+});
+    if (selectedProperty?.id === id) {
+      setSelectedProperty(properties.length > 1 ? properties.find(p => p.id !== id) : null);
+    }
+  };
+
+  const closeModal = () => {
+    setShowUploadModal(false);
+    setUploadError(null);
+    setUploadSuccess(null);
+    setPendingFiles([]);
+  };
+
+  const analyzeWithClaude = async (prompt) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, language })
+      });
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setAnalysis(data.content);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message || 'Error getting analysis');
+      setAnalysis(null);
+    }
+    setLoading(false);
+  };
+
+  const runAnalysis = (type) => {
+    const prop = selectedProperty || properties[0];
+    if (!prop) return;
+
+    const extraInfo = [];
+    if (prop.paymentPlan) extraInfo.push(`Payment plan: ${prop.paymentPlan}`);
+    if (prop.view) extraInfo.push(`View: ${prop.view}`);
+    if (prop.bedrooms) extraInfo.push(`Bedrooms: ${prop.bedrooms}`);
+    if (prop.amenities?.length) extraInfo.push(`Amenities: ${prop.amenities.join(', ')}`);
+    const extraContext = extraInfo.length > 0 ? `\nAdditional: ${extraInfo.join('; ')}` : '';
+
+    const correctionsContext = prop.corrections?.length > 0
+      ? `\nIMPORTANT - User corrections: ${prop.corrections.map(c => c.text).join('; ')}`
+      : '';
+
+    const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const langInstruction = language === 'en' ? 'Answer in English.' :
+                           language === 'ru' ? 'Ответ на русском языке.' :
+                           language === 'ar' ? 'أجب باللغة العربية.' :
+                           language === 'zh' ? '请用中文回答。' :
+                           language === 'fr' ? 'Répondez en français.' :
+                           language === 'es' ? 'Responde en español.' :
+                           language === 'de' ? 'Antworten Sie auf Deutsch.' :
+                           language === 'it' ? 'Rispondi in italiano.' :
+                           language === 'ja' ? '日本語で回答してください。' :
+                           language === 'th' ? 'ตอบเป็นภาษาไทย' :
+                           language === 'cs' ? 'Odpověz v češtině.' :
+                           language === 'kk' ? 'Қазақ тілінде жауап беріңіз.' :
+                           language === 'ka' ? 'უპასუხე ქართულად.' : 'Answer in English.';    
+
+    let prompt = '';
+    switch(type) {
+      case 'news':
+        prompt = `Today is ${today}. Find latest news about ${prop.location} area and developer ${prop.developer}.${correctionsContext} ${langInstruction} Max 500 words.`;
+        break;
+      case 'growth':
+        prompt = `Today is ${today}. Analyze growth potential for property in ${prop.location}. Price: ${prop.price}, size: ${prop.size} sq.ft, completion: ${prop.completion}.${extraContext}${correctionsContext} 3-5 year forecast. ${langInstruction}`;
+        break;
+      case 'risks':
+        prompt = `Today is ${today}. Evaluate investment risks for ${prop.name} in ${prop.location}. Developer: ${prop.developer}. Completion: ${prop.completion}.${extraContext}${correctionsContext} ${langInstruction}`;
+        break;
+      case 'comparison':
+        prompt = `Today is ${today}. Compare real estate markets and investment potential in the region where ${prop.location} is located. Analyze nearby areas and alternatives. Prices, growth, prospects. ${langInstruction}`;
+        break;
+      case 'timeline':
+        prompt = `Today is ${today}. Analyze construction timeline in ${prop.location}. Project ${prop.name} completion ${prop.completion}. Developer: ${prop.developer}.${correctionsContext} Are timelines realistic? ${langInstruction}`;
+        break;
+      default:
+        prompt = `Today is ${today}. Overview of property: ${prop.name} in ${prop.location}. Type: ${prop.type}, price: ${prop.price}, size: ${prop.size} sq.ft, completion: ${prop.completion}, developer: ${prop.developer}.${extraContext}${correctionsContext} Rate on 10-point scale. ${langInstruction}`;
+    }
+
+    analyzeWithClaude(prompt);
+  };
+
+  const handleCustomQuery = () => {
+    if (!query.trim() || !selectedProperty) return;
+    const prop = selectedProperty;
+    const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    const correctionsContext = prop.corrections?.length > 0
+      ? ` Corrections: ${prop.corrections.map(c => c.text).join('; ')}`
+      : '';
+
+    const langInstruction = language === 'en' ? 'Answer in English.' :
+                           language === 'ru' ? 'Ответ на русском языке.' :
+                           language === 'ar' ? 'أجب باللغة العربية.' :
+                           language === 'zh' ? '请用中文回答。' :
+                           language === 'fr' ? 'Répondez en français.' :
+                           language === 'es' ? 'Responde en español.' :
+                           language === 'de' ? 'Antworten Sie auf Deutsch.' :
+                           language === 'it' ? 'Rispondi in italiano.' :
+                           language === 'ja' ? '日本語で回答してください。' :
+                           language === 'th' ? 'ตอบเป็นภาษาไทย' :
+                           language === 'cs' ? 'Odpověz v češtině.' :
+                           language === 'kk' ? 'Қазақ тілінде жауап беріңіз.' :
+                           language === 'ka' ? 'უპასუხე ქართულად.' : 'Answer in English.';    
+
+    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${prop.size} sq.ft, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
+    analyzeWithClaude(contextPrompt);
+    setQuery('');
+  };
+
+  const currentProperty = selectedProperty;
+  const currentRisk = currentProperty ? risks[`${currentProperty.id}_${language}`] : null;
+  const currentRiskLoading = currentProperty ? riskLoading[currentProperty.id] : false;
+  const pricePerSqft = currentProperty?.size ? (currentProperty.price / currentProperty.size).toFixed(0) : 0;
+
+  // Upload Modal Component
+  const UploadModal = () => (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold">{t('upload.title')}</h3>
+          <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
+        </div>
+        <p className="text-gray-400 text-sm mb-4">{t('upload.description')}</p>
+        <div
+          onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragOver ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 hover:border-white/40'}`}
+        >
+          <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleFileSelect} className="hidden" />
+          <FileUp className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+          <p className="text-gray-300">{t('upload.dropzone')}</p>
+          <p className="text-xs text-gray-500">{t('upload.or')}</p>
+        </div>
+        {pendingFiles.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-400 mb-2">{t('upload.files')} ({pendingFiles.length}):</p>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {pendingFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <File className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm truncate">{file.name}</span>
+                  </div>
+                  <button onClick={() => removeFile(index)} className="p-1 hover:bg-red-500/20 rounded"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                </div>
+              ))}
+            </div>
+            <button onClick={handleUploadAll} disabled={uploadLoading} className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+              {uploadLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('upload.analyzing')}</span></> : <><Upload className="w-5 h-5" /><span>{t('upload.upload')}</span></>}
+            </button>
+          </div>
+        )}
+        {uploadError && <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">❌ {uploadError}</p></div>}
+        {uploadSuccess && <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{uploadSuccess}</p></div>}
+      </div>
+    </div>
+  );
+
+  // Empty state
+  if (properties.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+        {showUploadModal && <UploadModal />}
+        <div className="bg-black/30 backdrop-blur-md border-b border-white/10 relative z-50">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Building2 className="w-8 h-8 text-blue-400" />
+                <div>
+                  <h1 className="text-2xl font-bold">{t('header.title')}</h1>
+                  <p className="text-sm text-gray-400">{t('header.subtitle')}</p>
+                </div>
+              </div>
+              <LanguageSelector />
+            </div>
+          </div>
+        </div>
+        <div className="max-w-2xl mx-auto px-6 py-16">
+          <EmptyState onAddClick={() => setShowUploadModal(true)} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+      {showUploadModal && <UploadModal />}
+
+      {showCorrectionModal && currentProperty && (
+        <CorrectionModal
+          property={currentProperty}
+          onClose={() => setShowCorrectionModal(false)}
+          onCorrection={handleCorrection}
+          loading={correctionLoading}
+        />
+      )}
+
+      {notification && (
+        <UpdateNotification message={notification} onClose={() => setNotification(null)} />
+      )}
+
+      {/* Header */}
+      <div className="bg-black/30 backdrop-blur-md border-b border-white/10 relative z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Building2 className="w-8 h-8 text-blue-400" />
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold">{t('header.title')}</h1>
+                <p className="text-sm text-gray-400">{t('header.subtitle')}</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
+              <LanguageSelector />
+              <button onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg transition">
+                <Plus className="w-5 h-5 text-blue-400" />
+                <span className="text-sm font-medium">{t('header.addButton')}</span>
+              </button>
+              <div className="hidden sm:flex items-center gap-1 px-2 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-green-400" />
+                <span className="text-xs sm:text-sm font-medium">{properties.length} {t('header.objectsCount')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Sidebar */}
+          <div className="lg:col-span-1 space-y-4">
+            <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">{t('objects.title')}</h2>
+                <button onClick={() => setShowUploadModal(true)} className="p-2 hover:bg-white/10 rounded-lg transition">
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                {properties.map(prop => {
+                  const propRisk = risks[`${prop.id}_${language}`];
+                  const riskColor = propRisk ? (
+                    propRisk.overallRisk <= 35 ? 'bg-green-500' :
+                    propRisk.overallRisk <= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                  ) : 'bg-gray-500';
+                  const hasCorrections = prop.corrections?.length > 0;
+
+                  return (
+                    <div
+                      key={prop.id}
+                      onClick={() => setSelectedProperty(prop)}
+                      className={`p-4 rounded-lg border cursor-pointer transition relative group ${
+                        selectedProperty?.id === prop.id ? 'bg-blue-500/20 border-blue-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'
+                      }`}
+                    >
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteProperty(prop.id); }}
+                        className="absolute top-2 right-2 p-1 bg-red-500/20 hover:bg-red-500/40 rounded opacity-0 group-hover:opacity-100 transition"
+                      >
+                        <X className="w-3 h-3 text-red-400" />
+                      </button>
+
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="pr-6">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-semibold text-sm">{prop.name}</h3>
+                            {hasCorrections && (
+                              <span className="text-xs text-orange-400" title="Has corrections">✏️</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <MapPin className="w-3 h-3" />
+                            <span>{prop.location}</span>
+                          </div>
+                        </div>
+                        {propRisk && (
+                          <div className="flex items-center gap-1">
+                            <div className={`w-2.5 h-2.5 rounded-full ${riskColor}`} />
+                            <span className="text-xs font-bold">{propRisk.overallRisk}%</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-400">{t('objects.price')}:</span>
+                          <p className="font-medium text-green-400">{formatPrice(prop.price, prop.location)}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">{t('objects.completion')}:</span>
+                          <p className="font-medium">{prop.completion}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {currentProperty && (
+              <button
+                onClick={() => setShowCorrectionModal(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 rounded-xl transition"
+              >
+                <Edit3 className="w-5 h-5 text-orange-400" />
+                <span className="font-medium text-orange-300">{t('correction.title')}</span>
+              </button>
+            )}
+
+            {currentProperty && (
+              <RiskIndicator
+                risk={currentRisk}
+                loading={currentRiskLoading}
+                onRefresh={() => assessRisk(currentProperty)}
+              />
+            )}
+
+            {currentProperty && (
+              <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-lg rounded-xl p-4 border border-white/10">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t('stats.cost')}</span>
+                    <span className="font-bold text-green-400">{formatPrice(currentProperty.price, currentProperty.location)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t('stats.pricePerSqft')}</span>
+                    <span className="font-bold">{formatPrice(pricePerSqft, currentProperty.location)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">{t('stats.developer')}</span>
+                    <span className="font-bold text-xs text-right max-w-[120px] truncate">{currentProperty.developer}</span>
+                  </div>
+                  {currentProperty.corrections?.length > 0 && (
+                    <div className="pt-2 border-t border-white/10">
+                      <span className="text-xs text-orange-400">✏️ {currentProperty.corrections.length} {t('stats.corrections')}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+              <h2 className="text-lg font-semibold mb-4">{t('analysis.title')}</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <button onClick={() => runAnalysis('overview')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 rounded-lg border border-blue-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
+                  <FileText className="w-6 h-6 text-blue-400" />
+                  <span className="text-sm font-medium">{t('analysis.overview')}</span>
+                </button>
+                <button onClick={() => runAnalysis('news')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 rounded-lg border border-purple-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
+                  <Search className="w-6 h-6 text-purple-400" />
+                  <span className="text-sm font-medium">{t('analysis.news')}</span>
+                </button>
+                <button onClick={() => runAnalysis('growth')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 rounded-lg border border-green-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
+                  <TrendingUp className="w-6 h-6 text-green-400" />
+                  <span className="text-sm font-medium">{t('analysis.growth')}</span>
+                </button>
+                <button onClick={() => runAnalysis('risks')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
+                  <AlertCircle className="w-6 h-6 text-red-400" />
+                  <span className="text-sm font-medium">{t('analysis.risks')}</span>
+                </button>
+                <button onClick={() => runAnalysis('comparison')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 hover:from-yellow-500/30 hover:to-yellow-600/30 rounded-lg border border-yellow-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
+                  <MapPin className="w-6 h-6 text-yellow-400" />
+                  <span className="text-sm font-medium">{t('analysis.regions')}</span>
+                </button>
+                <button onClick={() => runAnalysis('timeline')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-indigo-500/20 to-indigo-600/20 hover:from-indigo-500/30 hover:to-indigo-600/30 rounded-lg border border-indigo-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
+                  <Calendar className="w-6 h-6 text-indigo-400" />
+                  <span className="text-sm font-medium">{t('analysis.timeline')}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
+              <h2 className="text-lg font-semibold mb-4">{t('analysis.customQuestion')}</h2>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleCustomQuery()}
+                  placeholder={t('analysis.placeholder')}
+                  className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500"
+                  disabled={loading || !currentProperty}
+                />
+                <button onClick={handleCustomQuery} disabled={loading || !query.trim() || !currentProperty} className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center gap-2">
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 min-h-[300px]">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">{t('analysis.results')}</h2>
+                {loading && <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /><span>{t('analysis.analyzing')}</span></div>}
+              </div>
+
+              {error && <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg mb-4"><p className="text-red-400">❌ {error}</p></div>}
+
+              {!analysis && !loading && !error && (
+                <div className="flex flex-col items-center justify-center h-48 text-gray-500">
+                  <Building2 className="w-12 h-12 mb-3 opacity-50" />
+                  <p>{t('analysis.selectAnalysis')}</p>
+                </div>
+              )}
+
+              {analysis && <div className="whitespace-pre-wrap text-gray-200 leading-relaxed">{analysis}</div>}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Main Component with Language Provider
+const RealEstateAgent = () => {
+  const [language, setLanguage] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en';
+    } catch { return 'en'; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.LANGUAGE, language); } catch {}
+
+    // Set RTL for Arabic
+    const currentLang = languages.find(l => l.code === language);
+    if (currentLang?.rtl) {
+      document.documentElement.setAttribute('dir', 'rtl');
+    } else {
+      document.documentElement.setAttribute('dir', 'ltr');
+    }
+  }, [language]);
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage }}>
+      <RealEstateAgentContent />
+    </LanguageContext.Provider>
+  );
+};
+
+export default RealEstateAgent;

@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "KI-Immobilienmakler",
+    "subtitle": "Globale Immobilien-Investitionsanalyse",
+    "addButton": "Hinzufügen",
+    "objectsCount": "Immobilie(n)"
+  },
+  "empty": {
+    "title": "Portfolio leer",
+    "description": "Laden Sie Immobilien-PDF-Dokumente hoch — KI extrahiert automatisch Daten und bewertet Risiken",
+    "addFirst": "Erste Immobilie hinzufügen"
+  },
+  "objects": {
+    "title": "Immobilien",
+    "price": "Preis",
+    "completion": "Fertigstellung"
+  },
+  "upload": {
+    "title": "Immobilie hinzufügen",
+    "description": "Laden Sie PDF-Dokumente hoch. KI extrahiert Daten und bewertet Risiken.",
+    "dropzone": "PDF-Dateien hierher ziehen",
+    "or": "oder klicken zum Auswählen",
+    "files": "Dateien",
+    "upload": "Hochladen",
+    "analyzing": "Analysiere..."
+  },
+  "risk": {
+    "title": "Risikobewertung",
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "risk": "Risiko",
+    "safe": "Sicher",
+    "dangerous": "Gefährlich",
+    "showDetails": "Details anzeigen",
+    "hideDetails": "Details ausblenden",
+    "recommendations": "Empfehlungen",
+    "assess": "Risiko bewerten",
+    "assessing": "Bewertung...",
+    "factors": {
+      "developer": "Bauträger",
+      "timeline": "Zeitplan",
+      "price": "Preis",
+      "location": "Standort",
+      "liquidity": "Liquidität"
+    }
+  },
+  "correction": {
+    "title": "Daten verfeinern",
+    "description": "Beschreiben Sie, was korrigiert werden muss. KI analysiert und aktualisiert.",
+    "currentData": "Aktuelle Daten",
+    "placeholder": "Beispiel: Fertigstellung ist Q2 2026...",
+    "examples": "Beispiele",
+    "cancel": "Abbrechen",
+    "apply": "Anwenden",
+    "processing": "Verarbeitung..."
+  },
+  "analysis": {
+    "title": "Analyse",
+    "overview": "Übersicht",
+    "news": "Nachrichten",
+    "growth": "Wachstum",
+    "risks": "Risiken",
+    "regions": "Regionen",
+    "timeline": "Zeitplan",
+    "customQuestion": "Eigene Frage",
+    "placeholder": "Beispiel: Soll ich in 2 Jahren verkaufen?",
+    "results": "Ergebnisse",
+    "analyzing": "Analysiere...",
+    "selectAnalysis": "Analysetyp wählen"
+  },
+  "stats": {
+    "cost": "Kosten",
+    "pricePerSqft": "Preis/Fuß²",
+    "developer": "Bauträger",
+    "corrections": "Korrektur(en)"
+  },
+  "labels": {
+    "name": "Name",
+    "location": "Standort",
+    "type": "Typ",
+    "area": "Fläche"
+  }
+}

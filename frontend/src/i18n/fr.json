@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "Agent Immobilier IA",
+    "subtitle": "Analyse mondiale des investissements immobiliers",
+    "addButton": "Ajouter",
+    "objectsCount": "propriété(s)"
+  },
+  "empty": {
+    "title": "Portfolio vide",
+    "description": "Téléchargez des documents PDF immobiliers — l'IA extraira automatiquement les données et évaluera les risques",
+    "addFirst": "Ajouter une propriété"
+  },
+  "objects": {
+    "title": "Propriétés",
+    "price": "Prix",
+    "completion": "Livraison"
+  },
+  "upload": {
+    "title": "Ajouter une propriété",
+    "description": "Téléchargez des documents PDF. L'IA extraira les données et évaluera les risques.",
+    "dropzone": "Déposez les fichiers PDF ici",
+    "or": "ou cliquez pour sélectionner",
+    "files": "Fichiers",
+    "upload": "Télécharger",
+    "analyzing": "Analyse..."
+  },
+  "risk": {
+    "title": "Score de Risque",
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Élevé",
+    "risk": "risque",
+    "safe": "Sûr",
+    "dangerous": "Dangereux",
+    "showDetails": "Afficher les détails",
+    "hideDetails": "Masquer les détails",
+    "recommendations": "Recommandations",
+    "assess": "Évaluer le risque",
+    "assessing": "Évaluation...",
+    "factors": {
+      "developer": "Promoteur",
+      "timeline": "Délais",
+      "price": "Prix",
+      "location": "Emplacement",
+      "liquidity": "Liquidité"
+    }
+  },
+  "correction": {
+    "title": "Affiner les données",
+    "description": "Décrivez ce qui doit être corrigé. L'IA analysera et mettra à jour.",
+    "currentData": "Données actuelles",
+    "placeholder": "Exemple: La date de livraison est en fait Q2 2026...",
+    "examples": "Exemples",
+    "cancel": "Annuler",
+    "apply": "Appliquer",
+    "processing": "Traitement..."
+  },
+  "analysis": {
+    "title": "Analyse",
+    "overview": "Aperçu",
+    "news": "Actualités",
+    "growth": "Croissance",
+    "risks": "Risques",
+    "regions": "Régions",
+    "timeline": "Délais",
+    "customQuestion": "Question personnalisée",
+    "placeholder": "Exemple: Dois-je vendre dans 2 ans?",
+    "results": "Résultats",
+    "analyzing": "Analyse...",
+    "selectAnalysis": "Sélectionnez le type d'analyse"
+  },
+  "stats": {
+    "cost": "Coût",
+    "pricePerSqft": "Prix/pied²",
+    "developer": "Promoteur",
+    "corrections": "correction(s)"
+  },
+  "labels": {
+    "name": "Nom",
+    "location": "Emplacement",
+    "type": "Type",
+    "area": "Surface"
+  }
+}

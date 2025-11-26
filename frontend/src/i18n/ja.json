@@ -1,0 +1,84 @@
+{
+  "header": {
+    "title": "AI不動産エージェント",
+    "subtitle": "グローバル不動産投資分析",
+    "addButton": "追加",
+    "objectsCount": "件の物件"
+  },
+  "empty": {
+    "title": "ポートフォリオが空です",
+    "description": "不動産PDFをアップロード — AIが自動的にデータを抽出しリスクを評価します",
+    "addFirst": "最初の物件を追加"
+  },
+  "objects": {
+    "title": "物件",
+    "price": "価格",
+    "completion": "完成"
+  },
+  "upload": {
+    "title": "物件を追加",
+    "description": "PDFをアップロード。AIがデータを抽出しリスクを評価します。",
+    "dropzone": "PDFファイルをドロップ",
+    "or": "またはクリックして選択",
+    "files": "ファイル",
+    "upload": "アップロード",
+    "analyzing": "分析中..."
+  },
+  "risk": {
+    "title": "リスクスコア",
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "risk": "リスク",
+    "safe": "安全",
+    "dangerous": "危険",
+    "showDetails": "詳細を表示",
+    "hideDetails": "詳細を隠す",
+    "recommendations": "推奨事項",
+    "assess": "リスク評価",
+    "assessing": "評価中...",
+    "factors": {
+      "developer": "開発業者",
+      "timeline": "スケジュール",
+      "price": "価格",
+      "location": "立地",
+      "liquidity": "流動性"
+    }
+  },
+  "correction": {
+    "title": "データを修正",
+    "description": "修正が必要な内容を記述。AIが分析し更新します。",
+    "currentData": "現在のデータ",
+    "placeholder": "例：完成日は実際にはQ2 2026...",
+    "examples": "例",
+    "cancel": "キャンセル",
+    "apply": "適用",
+    "processing": "処理中..."
+  },
+  "analysis": {
+    "title": "分析",
+    "overview": "概要",
+    "news": "ニュース",
+    "growth": "成長",
+    "risks": "リスク",
+    "regions": "地域",
+    "timeline": "スケジュール",
+    "customQuestion": "カスタム質問",
+    "placeholder": "例：2年後に売却すべき？",
+    "results": "結果",
+    "analyzing": "分析中...",
+    "selectAnalysis": "分析タイプを選択"
+  },
+  "stats": {
+    "cost": "費用",
+    "pricePerSqft": "価格/平方フィート",
+    "developer": "開発業者",
+    "corrections": "件の修正"
+  },
+  "labels": {
+    "name": "名前",
+    "location": "場所",
+    "type": "タイプ",
+    "area": "面積"
+  }
+}

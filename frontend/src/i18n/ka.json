@@ -71,7 +71,8 @@
   },
   "stats": {
     "cost": "Ghirebleba",
-    "pricePerSqft": "Fasi/kv.futi",
+    "pricePerSqft": "ფასი/კვ.ფუტი",
+    "pricePerSqm": "ფასი/მ²",
     "developer": "Developeri",
     "corrections": "shescoereba"
   },

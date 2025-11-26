@@ -71,7 +71,8 @@
   },
   "stats": {
     "cost": "Kosten",
-    "pricePerSqft": "Preis/Fuß²",
+    "pricePerSqft": "Preis/sq.ft",
+    "pricePerSqm": "Preis/m²",
     "developer": "Bauträger",
     "corrections": "Korrektur(en)"
   },

@@ -71,7 +71,8 @@
   },
   "stats": {
     "cost": "Naklady",
-    "pricePerSqft": "Cena/ft2",
+    "pricePerSqft": "Cena/sq.ft",
+    "pricePerSqm": "Cena/m²",
     "developer": "Developer",
     "corrections": "opravy"
   },

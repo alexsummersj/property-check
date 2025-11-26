@@ -71,7 +71,8 @@
   },
   "stats": {
     "cost": "成本",
-    "pricePerSqft": "每平方英尺",
+    "pricePerSqft": "价格/平方英尺",
+    "pricePerSqm": "价格/平方米",
     "developer": "开发商",
     "corrections": "次更正"
   },

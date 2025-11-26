@@ -72,6 +72,7 @@
   "stats": {
     "cost": "التكلفة",
     "pricePerSqft": "السعر/قدم²",
+    "pricePerSqm": "السعر/م²",
     "developer": "المطور",
     "corrections": "تحديث(ات)"
   },

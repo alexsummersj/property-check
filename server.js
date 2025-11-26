@@ -92,6 +92,87 @@ app.post('/api/analyze', async (req, res) => {
   }
 });
 
+// Parse property from text input
+app.post('/api/parse-text', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({ error: 'Please provide property details' });
+    }
+
+    // Шаг 1: Валидация - это вообще про недвижимость?
+    const validationResponse = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 100,
+      messages: [{
+        role: 'user',
+        content: `Is this text about real estate property (apartment, house, villa, land, commercial property for sale/rent/investment)? Answer only "YES" or "NO".
+
+Text: "${text.substring(0, 500)}"`
+      }]
+    });
+
+    const isValid = validationResponse.content[0].text.trim().toUpperCase().includes('YES');
+    
+    if (!isValid) {
+      return res.status(400).json({ 
+        error: 'This doesn\'t appear to be real estate information. Please provide details about a property (apartment, house, villa, etc.)' 
+      });
+    }
+
+    // Шаг 2: Парсинг данных
+    const message = await anthropic.messages.create({
+      model: 'claude-opus-4-5-20251101',
+      max_tokens: 2000,
+      messages: [{
+        role: 'user',
+        content: `Extract property information from this text and return as JSON.
+
+Text: "${text}"
+
+Return ONLY valid JSON (no markdown, no backticks):
+{
+  "name": "Project/Building name",
+  "location": "Full location/address",
+  "type": "Apartment/Villa/Townhouse/Penthouse/Studio",
+  "price": <number only, no currency>,
+  "size": <number in sq.ft or sq.m>,
+  "completion": "Q1 2025 or Ready or Under Construction",
+  "developer": "Developer name",
+  "bedrooms": <number or null>,
+  "bathrooms": <number or null>,
+  "paymentPlan": "Payment plan details or null",
+  "view": "View description or null",
+  "floor": <floor number or null>,
+  "amenities": ["amenity1", "amenity2"] or null,
+  "additionalInfo": "Any other relevant info"
+}
+
+If any field is not mentioned, make reasonable assumptions or use null.
+Extract numbers from text like "2.25M" = 2250000, "850sft" = 850.`
+      }]
+    });
+
+    const content = message.content[0].text;
+    
+    let property;
+    try {
+      const cleanJson = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      property = JSON.parse(cleanJson);
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return res.status(500).json({ error: 'Failed to parse property data' });
+    }
+
+    res.json({ success: true, property });
+
+  } catch (error) {
+    console.error('Parse text error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Endpoint для парсинга НЕСКОЛЬКИХ PDF файлов
 app.post('/api/parse-property', async (req, res) => {
   try {
@@ -157,6 +238,33 @@ app.post('/api/parse-property', async (req, res) => {
 Цену и площадь указывай как числа без валюты и запятых.
 Объедини информацию из всех документов для максимально полной картины.`
     });
+
+// Валидация: это вообще про недвижимость?
+    const validationResponse = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 100,
+      messages: [{
+        role: 'user',
+        content: [
+          contentParts[0],
+          {
+            type: 'text',
+            text: 'Is this document about real estate property (apartment, house, villa, land, commercial property for sale/rent/investment)? Answer only "YES" or "NO".'
+          }
+        ]
+      }]
+    });
+
+    const isValidPdf = validationResponse.content[0].text.trim().toUpperCase().includes('YES');
+    
+    if (!isValidPdf) {
+      console.log('❌ PDF не про недвижимость');
+      return res.status(400).json({ 
+        error: 'This document doesn\'t appear to be about real estate. Please upload a property brochure, listing, or sales document.' 
+      });
+    }
+    
+    console.log('✅ PDF валидация пройдена');
     
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-5-20251101',
@@ -272,6 +380,21 @@ app.post('/api/assess-risk', async (req, res) => {
       }
     }
 
+// Определение валюты по локации
+    const getCurrency = (loc) => {
+      const l = (loc || '').toLowerCase();
+      if (l.includes('dubai') || l.includes('uae') || l.includes('emirates') || l.includes('abu dhabi')) return 'AED';
+      if (l.includes('russia') || l.includes('moscow') || l.includes('россия') || l.includes('москва')) return 'RUB (₽)';
+      if (l.includes('london') || l.includes('uk') || l.includes('britain')) return 'GBP (£)';
+      if (l.includes('europe') || l.includes('spain') || l.includes('france') || l.includes('germany') || l.includes('italy')) return 'EUR (€)';
+      if (l.includes('turkey') || l.includes('istanbul')) return 'TRY (₺)';
+      if (l.includes('georgia') || l.includes('tbilisi') || l.includes('batumi')) return 'GEL (₾)';
+      if (l.includes('kazakhstan') || l.includes('astana') || l.includes('almaty')) return 'KZT (₸)';
+      if (l.includes('thailand') || l.includes('bangkok') || l.includes('phuket')) return 'THB (฿)';
+      return 'USD ($)';
+    };
+    const currency = getCurrency(property.location);
+
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-5-20251101',
       max_tokens: 2000,
@@ -285,7 +408,7 @@ Property Details:
 - Name: ${property.name}
 - Location: ${property.location}
 - Type: ${property.type}
-- Price: ${property.price} (use this EXACT price in your analysis)
+- Price: ${property.price} ${currency} (use this EXACT price and currency in your analysis)
 - Size: ${property.size} sq.ft
 - Completion: ${property.completion}
 - Developer: ${property.developer}
@@ -308,7 +431,7 @@ Return ONLY valid JSON (no markdown, no \`\`\`):
   "factors": {
     "developer": {"score": <0-100>, "reason": "<explanation>"},
     "timeline": {"score": <0-100>, "reason": "<explanation>"},
-    "price": {"score": <0-100>, "reason": "<explanation using the EXACT price ${property.price}>"},
+    "price": {"score": <0-100>, "reason": "<explanation using the EXACT price ${property.price} ${currency}>"},
     "location": {"score": <0-100>, "reason": "<explanation>"},
     "liquidity": {"score": <0-100>, "reason": "<explanation>"}
   },

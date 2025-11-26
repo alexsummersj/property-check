@@ -72,6 +72,7 @@
   "stats": {
     "cost": "費用",
     "pricePerSqft": "価格/平方フィート",
+    "pricePerSqm": "価格/m²",
     "developer": "開発業者",
     "corrections": "件の修正"
   },

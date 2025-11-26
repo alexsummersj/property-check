@@ -72,6 +72,8 @@
   "stats": {
     "cost": "Cost",
     "pricePerSqft": "Price/sq.ft",
+    "pricePerSqm": "Price/m²",
+    "pricePerSqm": "Price/m²",
     "developer": "Developer",
     "corrections": "correction(s)"
   },

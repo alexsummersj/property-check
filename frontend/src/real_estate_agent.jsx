@@ -7,31 +7,153 @@ const formatPrice = (price, location) => {
   if (!price) return 'N/A';
   const loc = (location || '').toLowerCase();
   let symbol = '$';
-  if (loc.includes('dubai') || loc.includes('abu dhabi') || loc.includes('uae')) {
+
+  // ОАЭ - районы и города
+  const uaeRegions = [
+    'dubai', 'дубай', 'abu dhabi', 'абу-даби', 'uae', 'emirates', 'оаэ', 'эмират',
+    'palm jumeirah', 'jumeirah', 'jbr', 'marina', 'downtown', 'business bay',
+    'creek', 'hills estate', 'dubai hills', 'arabian ranches', 'springs', 'meadows',
+    'bluewaters', 'emaar', 'damac', 'sobha', 'meraas', 'nakheel', 'deira', 'bur dubai',
+    'al barsha', 'tecom', 'internet city', 'media city', 'knowledge village',
+    'motor city', 'sports city', 'production city', 'silicon oasis', 'academic city',
+    'mirdif', 'al nahda', 'rashidiya', 'festival city', 'creek harbour',
+    'sharjah', 'шарджа', 'ajman', 'аджман', 'ras al khaimah', 'fujairah', 'umm al quwain'
+  ];
+  if (uaeRegions.some(r => loc.includes(r))) {
     symbol = 'AED ';
-  } else if (loc.includes('london') || loc.includes('uk') || loc.includes('england')) {
-    symbol = '£';
-  } else if (loc.includes('spain') || loc.includes('france') || loc.includes('germany') || loc.includes('italy')) {
-    symbol = '€';
-  } else if (loc.includes('russia') || loc.includes('moscow')) {
+  }
+  // Россия - города и районы
+  else if ([
+    'russia', 'россия', 'moscow', 'москва', 'petersburg', 'петербург', 'спб',
+    'сочи', 'sochi', 'краснодар', 'krasnodar', 'новосибирск', 'екатеринбург',
+    'казань', 'kazan', 'нижний новгород', 'самара', 'ростов', 'уфа', 'воронеж',
+    'рублёвка', 'рублевка', 'барвиха', 'жуковка', 'горки', 'одинцово',
+    'химки', 'красногорск', 'мытищи', 'балашиха', 'подольск', 'люберцы'
+  ].some(r => loc.includes(r))) {
     symbol = '₽';
-  } else if (loc.includes('china') || loc.includes('beijing')) {
-    symbol = '¥';
-  } else if (loc.includes('japan') || loc.includes('tokyo')) {
-    symbol = '¥';
-  } else if (loc.includes('thailand') || loc.includes('bangkok')) {
-    symbol = '฿';
-  } else if (loc.includes('kazakhstan') || loc.includes('astana')) {
-    symbol = '₸';
-  } else if (loc.includes('georgia') || loc.includes('tbilisi')) {
+  }
+  // Великобритания
+  else if ([
+    'london', 'лондон', 'uk', 'britain', 'england', 'manchester', 'birmingham',
+    'liverpool', 'leeds', 'bristol', 'edinburgh', 'glasgow', 'cambridge', 'oxford',
+    'chelsea', 'kensington', 'mayfair', 'westminster', 'canary wharf', 'city of london',
+    'notting hill', 'hampstead', 'richmond', 'wimbledon', 'greenwich'
+  ].some(r => loc.includes(r))) {
+    symbol = '£';
+  }
+  // Европа (Евро)
+  else if ([
+    'spain', 'испания', 'france', 'франция', 'germany', 'германия', 'italy', 'италия',
+    'portugal', 'португалия', 'europe', 'европа', 'netherlands', 'голландия', 'belgium', 'бельгия',
+    'austria', 'австрия', 'ireland', 'ирландия', 'greece', 'греция', 'finland', 'финляндия',
+    'paris', 'париж', 'barcelona', 'барселона', 'madrid', 'мадрид', 'berlin', 'берлин',
+    'rome', 'рим', 'milan', 'милан', 'amsterdam', 'амстердам', 'vienna', 'вена',
+    'marbella', 'марбелья', 'costa del sol', 'costa brava', 'mallorca', 'ibiza',
+    'nice', 'ницца', 'cannes', 'monaco', 'монако', 'cote d\'azur', 'лазурный берег'
+  ].some(r => loc.includes(r))) {
+    symbol = '€';
+  }
+  // Турция
+  else if ([
+    'turkey', 'турция', 'istanbul', 'стамбул', 'antalya', 'анталья', 'alanya', 'алания',
+    'bodrum', 'бодрум', 'fethiye', 'фетхие', 'side', 'сиде', 'kemer', 'кемер',
+    'ankara', 'анкара', 'izmir', 'измир', 'bursa', 'trabzon'
+  ].some(r => loc.includes(r))) {
+    symbol = '₺';
+  }
+  // Грузия
+  else if ([
+    'georgia', 'грузия', 'tbilisi', 'тбилиси', 'batumi', 'батуми', 'kutaisi', 'кутаиси',
+    'borjomi', 'боржоми', 'gudauri', 'гудаури', 'bakuriani', 'бакуриани'
+  ].some(r => loc.includes(r))) {
     symbol = '₾';
   }
+  // Казахстан
+  else if ([
+    'kazakhstan', 'казахстан', 'astana', 'астана', 'almaty', 'алматы', 'алма-ата',
+    'shymkent', 'шымкент', 'aktau', 'актау', 'atyrau', 'атырау'
+  ].some(r => loc.includes(r))) {
+    symbol = '₸';
+  }
+  // Таиланд
+  else if ([
+    'thailand', 'таиланд', 'bangkok', 'бангкок', 'phuket', 'пхукет', 'pattaya', 'паттайя',
+    'chiang mai', 'чиангмай', 'samui', 'самуи', 'krabi', 'краби', 'hua hin', 'хуа хин'
+  ].some(r => loc.includes(r))) {
+    symbol = '฿';
+  }
+  // Китай
+  else if ([
+    'china', 'китай', 'beijing', 'пекин', 'shanghai', 'шанхай', 'shenzhen', 'шэньчжэнь',
+    'guangzhou', 'гуанчжоу', 'hong kong', 'гонконг', 'hangzhou', 'chengdu'
+  ].some(r => loc.includes(r))) {
+    symbol = '¥';
+  }
+  // Япония
+  else if ([
+    'japan', 'япония', 'tokyo', 'токио', 'osaka', 'осака', 'kyoto', 'киото',
+    'yokohama', 'йокогама', 'nagoya', 'нагоя', 'sapporo', 'саппоро'
+  ].some(r => loc.includes(r))) {
+    symbol = '¥';
+  }
+  // Чехия
+  else if ([
+    'czech', 'чехия', 'prague', 'прага', 'brno', 'брно', 'karlovy vary', 'карловы вары'
+  ].some(r => loc.includes(r))) {
+    symbol = 'Kč ';
+  }
+  // Индия
+  else if ([
+    'india', 'индия', 'mumbai', 'мумбаи', 'delhi', 'дели', 'bangalore', 'бангалор',
+    'goa', 'гоа', 'hyderabad', 'chennai', 'pune', 'kolkata'
+  ].some(r => loc.includes(r))) {
+    symbol = '₹';
+  }
+  // США
+  else if ([
+    'usa', 'сша', 'america', 'америка', 'new york', 'нью-йорк', 'manhattan', 'манхэттен',
+    'miami', 'майами', 'los angeles', 'лос-анджелес', 'california', 'калифорния',
+    'florida', 'флорида', 'texas', 'техас', 'vegas', 'вегас', 'san francisco',
+    'chicago', 'чикаго', 'boston', 'бостон', 'seattle', 'сиэтл', 'washington'
+  ].some(r => loc.includes(r))) {
+    symbol = '$';
+  }
+
   if (price >= 1000000) {
     return `${symbol}${(price / 1000000).toFixed(1)}M`;
   } else if (price >= 1000) {
     return `${symbol}${(price / 1000).toFixed(0)}K`;
   }
   return `${symbol}${price.toLocaleString()}`;
+};
+
+// Определение единицы площади по региону
+const formatArea = (size, location) => {
+  if (!size) return 'N/A';
+  const loc = (location || '').toLowerCase();
+  
+  // Регионы где используют квадратные метры
+  const metricRegions = [
+    'russia', 'россия', 'moscow', 'москва', 'petersburg', 'петербург',
+    'europe', 'европа', 'spain', 'испания', 'france', 'франция', 'germany', 'германия', 'italy', 'италия',
+    'portugal', 'paris', 'barcelona', 'madrid', 'berlin', 'rome',
+    'turkey', 'турция', 'istanbul', 'стамбул',
+    'georgia', 'грузия', 'tbilisi', 'тбилиси', 'batumi', 'батуми',
+    'czech', 'чехия', 'prague', 'прага',
+    'kazakhstan', 'казахстан', 'astana', 'астана', 'almaty', 'алматы',
+    'china', 'китай', 'japan', 'япония', 'thailand', 'таиланд',
+    'india', 'индия'
+  ];
+  
+  const useMetric = metricRegions.some(region => loc.includes(region));
+  
+  if (useMetric) {
+    // Если размер явно в sqft (большое число), конвертируем в м²
+    const sqm = size > 100 ? Math.round(size * 0.0929) : size;
+    return `${sqm} m²`;
+  }
+  
+  return `${size} sqft`;
 };
 
 // Language Context
@@ -47,8 +169,6 @@ const useT = () => {
   const { language } = useLanguage();
   return (path) => getTranslation(language, path);
 };
-
-// Language Selector Component
 
 // Language Selector Component with Flag Images
 const LanguageSelector = () => {
@@ -114,6 +234,12 @@ const LanguageSelector = () => {
       )}
     </div>
   );
+};
+
+const STORAGE_KEYS = {
+  PROPERTIES: 'real_estate_properties',
+  RISKS: 'real_estate_risks',
+  LANGUAGE: 'real_estate_language'
 };
 
 // Risk Indicator Component
@@ -272,10 +398,6 @@ const CorrectionModal = ({ property, onClose, onCorrection, loading }) => {
   const [text, setText] = useState('');
   const t = useT();
 
-  const examples = [
-    t('correction.placeholder'),
-  ];
-
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10">
@@ -299,7 +421,7 @@ const CorrectionModal = ({ property, onClose, onCorrection, loading }) => {
             <div><span className="text-gray-500">{t('objects.completion')}:</span> <span className="text-white">{property.completion}</span></div>
             <div><span className="text-gray-500">{t('stats.developer')}:</span> <span className="text-white">{property.developer}</span></div>
             <div><span className="text-gray-500">{t('objects.price')}:</span> <span className="text-white">{formatPrice(property.price, property.location)}</span></div>
-            <div><span className="text-gray-500">{t('labels.area')}:</span> <span className="text-white">{property.size} SF</span></div>
+            <div><span className="text-gray-500">{t('labels.area')}:</span> <span className="text-white">{formatArea(property.size, property.location)}</span></div>
           </div>
         </div>
 
@@ -474,7 +596,7 @@ const RealEstateAgentContent = () => {
       const data = await response.json();
 
       if (data.success && data.risk) {
-        setRisks(prev => ({ ...prev, [`${property.id}_${language}`]: data.risk }));
+        setRisks(prev => ({ ...prev, [property.id]: data.risk }));
       }
     } catch (err) {
       console.error('Risk assessment error:', err);
@@ -578,14 +700,7 @@ const RealEstateAgentContent = () => {
 
   const handleDeleteProperty = (id) => {
     setProperties(prev => prev.filter(p => p.id !== id));
-    setRisks(prev => { 
-  const newRisks = { ...prev }; 
-  // Удаляем риски для всех языков
-  Object.keys(newRisks).forEach(key => {
-    if (key.startsWith(`${id}_`)) delete newRisks[key];
-  });
-  return newRisks; 
-});
+    setRisks(prev => { const newRisks = { ...prev }; delete newRisks[id]; return newRisks; });
     if (selectedProperty?.id === id) {
       setSelectedProperty(properties.length > 1 ? properties.find(p => p.id !== id) : null);
     }
@@ -620,6 +735,25 @@ const RealEstateAgentContent = () => {
     setLoading(false);
   };
 
+  const getLangInstruction = () => {
+    const instructions = {
+      'en': 'Answer in English.',
+      'ru': 'Ответ на русском языке.',
+      'ar': 'أجب باللغة العربية.',
+      'zh': '请用中文回答。',
+      'fr': 'Répondez en français.',
+      'es': 'Responde en español.',
+      'de': 'Antworten Sie auf Deutsch.',
+      'it': 'Rispondi in italiano.',
+      'ja': '日本語で回答してください。',
+      'th': 'ตอบเป็นภาษาไทย',
+      'cs': 'Odpověz v češtině.',
+      'kk': 'Қазақ тілінде жауап беріңіз.',
+      'ka': 'უპასუხე ქართულად.'
+    };
+    return instructions[language] || 'Answer in English.';
+  };
+
   const runAnalysis = (type) => {
     const prop = selectedProperty || properties[0];
     if (!prop) return;
@@ -636,20 +770,7 @@ const RealEstateAgentContent = () => {
       : '';
 
     const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    const langInstruction = language === 'en' ? 'Answer in English.' :
-                           language === 'ru' ? 'Ответ на русском языке.' :
-                           language === 'ar' ? 'أجب باللغة العربية.' :
-                           language === 'zh' ? '请用中文回答。' :
-                           language === 'fr' ? 'Répondez en français.' :
-                           language === 'es' ? 'Responde en español.' :
-                           language === 'de' ? 'Antworten Sie auf Deutsch.' :
-                           language === 'it' ? 'Rispondi in italiano.' :
-                           language === 'ja' ? '日本語で回答してください。' :
-                           language === 'th' ? 'ตอบเป็นภาษาไทย' :
-                           language === 'cs' ? 'Odpověz v češtině.' :
-                           language === 'kk' ? 'Қазақ тілінде жауап беріңіз.' :
-                           language === 'ka' ? 'უპასუხე ქართულად.' : 'Answer in English.';    
+    const langInstruction = getLangInstruction();
 
     let prompt = '';
     switch(type) {
@@ -657,19 +778,19 @@ const RealEstateAgentContent = () => {
         prompt = `Today is ${today}. Find latest news about ${prop.location} area and developer ${prop.developer}.${correctionsContext} ${langInstruction} Max 500 words.`;
         break;
       case 'growth':
-        prompt = `Today is ${today}. Analyze growth potential for property in ${prop.location}. Price: ${prop.price}, size: ${prop.size} sq.ft, completion: ${prop.completion}.${extraContext}${correctionsContext} 3-5 year forecast. ${langInstruction}`;
+        prompt = `Today is ${today}. Analyze growth potential for property in ${prop.location}. Price: ${prop.price}, size: ${formatArea(prop.size, prop.location)}, completion: ${prop.completion}.${extraContext}${correctionsContext} 3-5 year forecast. ${langInstruction}`;
         break;
       case 'risks':
         prompt = `Today is ${today}. Evaluate investment risks for ${prop.name} in ${prop.location}. Developer: ${prop.developer}. Completion: ${prop.completion}.${extraContext}${correctionsContext} ${langInstruction}`;
         break;
       case 'comparison':
-        prompt = `Today is ${today}. Compare real estate markets and investment potential in the region where ${prop.location} is located. Analyze nearby areas and alternatives. Prices, growth, prospects. ${langInstruction}`;
+        prompt = `Today is ${today}. Compare real estate markets and investment potential in the region where ${prop.location} is located. Analyze nearby areas and alternatives. ${langInstruction}`;
         break;
       case 'timeline':
         prompt = `Today is ${today}. Analyze construction timeline in ${prop.location}. Project ${prop.name} completion ${prop.completion}. Developer: ${prop.developer}.${correctionsContext} Are timelines realistic? ${langInstruction}`;
         break;
       default:
-        prompt = `Today is ${today}. Overview of property: ${prop.name} in ${prop.location}. Type: ${prop.type}, price: ${prop.price}, size: ${prop.size} sq.ft, completion: ${prop.completion}, developer: ${prop.developer}.${extraContext}${correctionsContext} Rate on 10-point scale. ${langInstruction}`;
+        prompt = `Today is ${today}. Overview of property: ${prop.name} in ${prop.location}. Type: ${prop.type}, price: ${prop.price}, size: ${formatArea(prop.size, prop.location)}, completion: ${prop.completion}, developer: ${prop.developer}.${extraContext}${correctionsContext} Rate on 10-point scale. ${langInstruction}`;
     }
 
     analyzeWithClaude(prompt);
@@ -683,73 +804,195 @@ const RealEstateAgentContent = () => {
       ? ` Corrections: ${prop.corrections.map(c => c.text).join('; ')}`
       : '';
 
-    const langInstruction = language === 'en' ? 'Answer in English.' :
-                           language === 'ru' ? 'Ответ на русском языке.' :
-                           language === 'ar' ? 'أجب باللغة العربية.' :
-                           language === 'zh' ? '请用中文回答。' :
-                           language === 'fr' ? 'Répondez en français.' :
-                           language === 'es' ? 'Responde en español.' :
-                           language === 'de' ? 'Antworten Sie auf Deutsch.' :
-                           language === 'it' ? 'Rispondi in italiano.' :
-                           language === 'ja' ? '日本語で回答してください。' :
-                           language === 'th' ? 'ตอบเป็นภาษาไทย' :
-                           language === 'cs' ? 'Odpověz v češtině.' :
-                           language === 'kk' ? 'Қазақ тілінде жауап беріңіз.' :
-                           language === 'ka' ? 'უპასუხე ქართულად.' : 'Answer in English.';    
+    const langInstruction = getLangInstruction();
 
-    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${prop.size} sq.ft, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
+    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
     analyzeWithClaude(contextPrompt);
     setQuery('');
   };
 
   const currentProperty = selectedProperty;
-  const currentRisk = currentProperty ? risks[`${currentProperty.id}_${language}`] : null;
+  const currentRisk = currentProperty ? risks[currentProperty.id] : null;
   const currentRiskLoading = currentProperty ? riskLoading[currentProperty.id] : false;
-  const pricePerSqft = currentProperty?.size ? (currentProperty.price / currentProperty.size).toFixed(0) : 0;
+  const isMetricRegion = (loc) => {
+    const l = (loc || '').toLowerCase();
+    const sqftRegions = ['dubai', 'uae', 'palm jumeirah', 'jumeirah', 'marina', 'downtown', 'business bay', 'jbr', 'creek', 'hills estate', 'arabian ranches', 'bluewaters', 'sharjah', 'ajman', 'london', 'uk', 'britain', 'usa', 'america', 'new york', 'florida', 'california'];
+    if (sqftRegions.some(r => l.includes(r))) return false;
+    const metricRegions = ['russia', 'россия', 'moscow', 'москва', 'europe', 'европа', 'spain', 'france', 'germany', 'italy', 'turkey', 'турция', 'georgia', 'грузия', 'czech', 'kazakhstan', 'казахстан', 'china', 'japan', 'thailand', 'india'];
+    return metricRegions.some(r => l.includes(r));
+  };
+  
+  const useMetric = currentProperty ? isMetricRegion(currentProperty.location) : false;
+  const pricePerUnit = currentProperty?.size ? (
+    useMetric 
+      ? (currentProperty.price / (currentProperty.size * 0.0929)).toFixed(0)  // цена за m²
+      : (currentProperty.price / currentProperty.size).toFixed(0)  // цена за sqft
+  ) : 0;
 
   // Upload Modal Component
-  const UploadModal = () => (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold">{t('upload.title')}</h3>
-          <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
-        </div>
-        <p className="text-gray-400 text-sm mb-4">{t('upload.description')}</p>
-        <div
-          onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragOver ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 hover:border-white/40'}`}
-        >
-          <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleFileSelect} className="hidden" />
-          <FileUp className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-300">{t('upload.dropzone')}</p>
-          <p className="text-xs text-gray-500">{t('upload.or')}</p>
-        </div>
-        {pendingFiles.length > 0 && (
-          <div className="mt-4">
-            <p className="text-sm text-gray-400 mb-2">{t('upload.files')} ({pendingFiles.length}):</p>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {pendingFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <File className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm truncate">{file.name}</span>
-                  </div>
-                  <button onClick={() => removeFile(index)} className="p-1 hover:bg-red-500/20 rounded"><Trash2 className="w-4 h-4 text-red-400" /></button>
-                </div>
-              ))}
-            </div>
-            <button onClick={handleUploadAll} disabled={uploadLoading} className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2">
-              {uploadLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('upload.analyzing')}</span></> : <><Upload className="w-5 h-5" /><span>{t('upload.upload')}</span></>}
+  const UploadModal = () => {
+    const [mode, setMode] = useState('pdf'); // 'pdf' or 'text'
+    const [textInput, setTextInput] = useState('');
+    const [textLoading, setTextLoading] = useState(false);
+
+    const handleTextSubmit = async () => {
+      if (!textInput.trim()) return;
+      
+      setTextLoading(true);
+      setUploadError(null);
+      
+      try {
+        const response = await fetch('/api/parse-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: textInput })
+        });
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        if (data.success && data.property) {
+          const newProperty = {
+            id: Date.now(),
+            name: data.property.name || 'New Property',
+            location: data.property.location || 'Not specified',
+            type: data.property.type || 'Not specified',
+            price: data.property.price || 0,
+            size: data.property.size || 0,
+            completion: data.property.completion || 'Not specified',
+            developer: data.property.developer || 'Not specified',
+            bedrooms: data.property.bedrooms,
+            bathrooms: data.property.bathrooms,
+            paymentPlan: data.property.paymentPlan,
+            view: data.property.view,
+            floor: data.property.floor,
+            amenities: data.property.amenities,
+            additionalInfo: data.property.additionalInfo,
+            addedAt: new Date().toISOString(),
+            corrections: []
+          };
+          
+          setProperties(prev => [...prev, newProperty]);
+          setSelectedProperty(newProperty);
+          setUploadSuccess(`✅ "${newProperty.name}" added!`);
+          setTextInput('');
+          
+          setTimeout(() => assessRisk(newProperty), 500);
+          
+          setTimeout(() => {
+            setShowUploadModal(false);
+            setUploadSuccess(null);
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Text parse error:', err);
+        setUploadError(err.message || 'Error parsing text');
+      } finally {
+        setTextLoading(false);
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold">{t('upload.title')}</h3>
+            <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
+          </div>
+          
+          {/* Mode Tabs */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setMode('pdf')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+                mode === 'pdf' ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20'
+              }`}
+            >
+              <FileUp className="w-4 h-4" />
+              PDF
+            </button>
+            <button
+              onClick={() => setMode('text')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+                mode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20'
+              }`}
+            >
+              <Edit3 className="w-4 h-4" />
+              Text
             </button>
           </div>
-        )}
-        {uploadError && <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">❌ {uploadError}</p></div>}
-        {uploadSuccess && <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{uploadSuccess}</p></div>}
+
+          {mode === 'pdf' ? (
+            <>
+              <p className="text-gray-400 text-sm mb-4">{t('upload.description')}</p>
+              <div
+                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragOver ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 hover:border-white/40'}`}
+              >
+                <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleFileSelect} className="hidden" />
+                <FileUp className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-300">{t('upload.dropzone')}</p>
+                <p className="text-xs text-gray-500">{t('upload.or')}</p>
+              </div>
+              {pendingFiles.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-400 mb-2">{t('upload.files')} ({pendingFiles.length}):</p>
+                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {pendingFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <File className="w-4 h-4 text-blue-400" />
+                          <span className="text-sm truncate">{file.name}</span>
+                        </div>
+                        <button onClick={() => removeFile(index)} className="p-1 hover:bg-red-500/20 rounded"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={handleUploadAll} disabled={uploadLoading} className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+                    {uploadLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('upload.analyzing')}</span></> : <><Upload className="w-5 h-5" /><span>{t('upload.upload')}</span></>}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-gray-400 text-sm mb-4">Describe the property in any format. AI will extract the details.</p>
+              <textarea
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                placeholder="Example: 2BR apartment in Waves Grande, Dubai Marina. 850 sqft, price 2.25M AED, Sobha developer, ready Q2 2025, sea view, 15th floor..."
+                className="w-full h-32 px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 resize-none mb-4"
+                disabled={textLoading}
+              />
+              <div className="bg-white/5 rounded-lg p-3 mb-4">
+                <p className="text-xs text-gray-400 mb-2">💡 Include any of these:</p>
+                <div className="flex flex-wrap gap-2">
+                  {['Name/Project', 'Location', 'Price', 'Size (sqft)', 'Bedrooms', 'Developer', 'Completion', 'View', 'Floor'].map(tag => (
+                    <span key={tag} className="text-xs bg-white/10 px-2 py-1 rounded">{tag}</span>
+                  ))}
+                </div>
+              </div>
+              <button 
+                onClick={handleTextSubmit} 
+                disabled={textLoading || !textInput.trim()}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {textLoading ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /><span>Analyzing...</span></>
+                ) : (
+                  <><CheckCircle className="w-5 h-5" /><span>Add Property</span></>
+                )}
+              </button>
+            </>
+          )}
+          
+          {uploadError && <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">❌ {uploadError}</p></div>}
+          {uploadSuccess && <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{uploadSuccess}</p></div>}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Empty state
   if (properties.length === 0) {
@@ -760,10 +1003,12 @@ const RealEstateAgentContent = () => {
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Building2 className="w-8 h-8 text-blue-400" />
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <Search className="w-5 h-5 text-white" />
+                </div>
                 <div>
-                  <h1 className="text-2xl font-bold">{t('header.title')}</h1>
-                  <p className="text-sm text-gray-400">{t('header.subtitle')}</p>
+                  <h1 className="text-xl sm:text-2xl font-bold">Property Check</h1>
+                  <p className="text-sm text-gray-400">Global Real Estate Investment Analysis</p>
                 </div>
               </div>
               <LanguageSelector />
@@ -799,10 +1044,12 @@ const RealEstateAgentContent = () => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-blue-400" />
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Search className="w-5 h-5 text-white" />
+              </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold">{t('header.title')}</h1>
-                <p className="text-sm text-gray-400">{t('header.subtitle')}</p>
+                <h1 className="text-xl sm:text-2xl font-bold">Property Check</h1>
+                <p className="text-sm text-gray-400">Global Real Estate Investment Analysis</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
@@ -834,7 +1081,7 @@ const RealEstateAgentContent = () => {
 
               <div className="space-y-3 max-h-[300px] overflow-y-auto">
                 {properties.map(prop => {
-                  const propRisk = risks[`${prop.id}_${language}`];
+                  const propRisk = risks[prop.id];
                   const riskColor = propRisk ? (
                     propRisk.overallRisk <= 35 ? 'bg-green-500' :
                     propRisk.overallRisk <= 60 ? 'bg-yellow-500' : 'bg-red-500'
@@ -919,8 +1166,8 @@ const RealEstateAgentContent = () => {
                     <span className="font-bold text-green-400">{formatPrice(currentProperty.price, currentProperty.location)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">{t('stats.pricePerSqft')}</span>
-                    <span className="font-bold">{formatPrice(pricePerSqft, currentProperty.location)}</span>
+                    <span className="text-gray-400">{useMetric ? t('stats.pricePerSqm') : t('stats.pricePerSqft')}</span>
+                    <span className="font-bold">{formatPrice(pricePerUnit, currentProperty.location)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">{t('stats.developer')}</span>

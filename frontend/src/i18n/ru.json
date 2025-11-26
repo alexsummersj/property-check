@@ -72,6 +72,8 @@
   "stats": {
     "cost": "Стоимость",
     "pricePerSqft": "Цена/кв.фут",
+    "pricePerSqm": "Цена/м²",
+    "pricePerSqm": "Цена/м²",
     "developer": "Застройщик",
     "corrections": "уточнение(ий)"
   },

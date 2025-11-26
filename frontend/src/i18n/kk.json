@@ -71,7 +71,8 @@
   },
   "stats": {
     "cost": "Kuny",
-    "pricePerSqft": "Baga/sharshi fut",
+    "pricePerSqft": "Баға/шаршы фут",
+    "pricePerSqm": "Баға/м²",
     "developer": "Kurylysshy",
     "corrections": "tuzetuler"
   },

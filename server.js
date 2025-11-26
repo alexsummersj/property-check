@@ -33,6 +33,124 @@ const anthropic = new Anthropic({
   apiKey: API_KEY,
 });
 
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const fs = require('fs');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'property-check-secret-key-change-in-production';
+const USERS_FILE = './users.json';
+
+// Загрузка/сохранение пользователей
+const loadUsers = () => {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return [];
+};
+
+const saveUsers = (users) => {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+};
+
+// Регистрация
+app.post('/api/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
+    
+    const users = loadUsers();
+    
+    if (users.find(u => u.email === email)) {
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = {
+      id: Date.now(),
+      email,
+      name: name || email.split('@')[0],
+      password: hashedPassword,
+      plan: 'free',
+      analysisCount: 0,
+      createdAt: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    saveUsers(users);
+    
+    const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '30d' });
+    
+    res.json({ 
+      success: true, 
+      token,
+      user: { id: newUser.id, email: newUser.email, name: newUser.name, plan: newUser.plan }
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// Вход
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const users = loadUsers();
+    const user = users.find(u => u.email === email);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    
+    res.json({ 
+      success: true, 
+      token,
+      user: { id: user.id, email: user.email, name: user.name, plan: user.plan }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Проверка токена
+app.get('/api/me', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No token' });
+  }
+  
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const users = loadUsers();
+    const user = users.find(u => u.id === decoded.id);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    res.json({ 
+      user: { id: user.id, email: user.email, name: user.name, plan: user.plan, analysisCount: user.analysisCount }
+    });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
 // API endpoint для анализа
 app.post('/api/analyze', async (req, res) => {
   try {

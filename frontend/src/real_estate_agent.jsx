@@ -2,6 +2,14 @@ import React, { useState, useRef, useEffect, createContext, useContext } from 'r
 import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe } from 'lucide-react';
 import { translations, languages, getTranslation } from './i18n';
 
+// Auth constants
+const FREE_ANALYSIS_LIMIT = 3;
+const AUTH_STORAGE_KEYS = {
+  TOKEN: 'property_check_token',
+  USER: 'property_check_user',
+  ANALYSIS_COUNT: 'property_check_analysis_count'
+};
+
 // Умное определение валюты по локации
 const formatPrice = (price, location) => {
   if (!price) return 'N/A';
@@ -472,7 +480,84 @@ const UpdateNotification = ({ message, onClose }) => (
     </div>
   </div>
 );
+// Auth Modal Component
+const AuthModal = ({ onClose, onSuccess }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      setError('Please fill all fields');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const endpoint = isLogin ? '/api/login' : '/api/register';
+      const body = isLogin ? { email, password } : { email, password, name };
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+      if (data.error) {
+        setError(data.error);
+      } else if (data.success) {
+        localStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, data.token);
+        localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(data.user));
+        onSuccess(data.user);
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+      <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-white/10">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold">{isLogin ? 'Welcome Back' : 'Create Account'}</h3>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+          <p className="text-sm text-blue-300">🎉 Sign up for unlimited free analyses during our beta!</p>
+        </div>
+        {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-sm text-red-400">{error}</p></div>}
+        <div className="space-y-4">
+          {!isLogin && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Name</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onKeyPress={(e) => e.key === 'Enter' && handleSubmit()} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <button onClick={handleSubmit} disabled={loading} className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2">
+            {loading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>Please wait...</span></> : <span>{isLogin ? 'Sign In' : 'Create Account'}</span>}
+          </button>
+        </div>
+        <div className="mt-4 text-center">
+          <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-sm text-gray-400 hover:text-white transition">
+            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 // Main Component
 const RealEstateAgentContent = () => {
   const t = useT();
@@ -507,8 +592,50 @@ const RealEstateAgentContent = () => {
   const [pendingFiles, setPendingFiles] = useState([]);
   const fileInputRef = useRef(null);
 
+  // Auth state
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem(AUTH_STORAGE_KEYS.USER);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [analysisCount, setAnalysisCount] = useState(() => {
+    try {
+      return parseInt(localStorage.getItem(AUTH_STORAGE_KEYS.ANALYSIS_COUNT) || '0');
+    } catch { return 0; }
+  });
   const [showCorrectionModal, setShowCorrectionModal] = useState(false);
   const [correctionLoading, setCorrectionLoading] = useState(false);
+
+  // Auth functions
+  const canAnalyze = () => {
+    if (user) return true;
+    if (analysisCount < FREE_ANALYSIS_LIMIT) return true;
+    return false;
+  };
+
+  const incrementAnalysisCount = () => {
+    if (!user) {
+      const newCount = analysisCount + 1;
+      setAnalysisCount(newCount);
+      localStorage.setItem(AUTH_STORAGE_KEYS.ANALYSIS_COUNT, newCount.toString());
+      if (newCount >= FREE_ANALYSIS_LIMIT) {
+        setTimeout(() => setShowAuthModal(true), 1000);
+      }
+    }
+  };
+
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+    setShowAuthModal(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(AUTH_STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(AUTH_STORAGE_KEYS.USER);
+    setUser(null);
+  };
   const [notification, setNotification] = useState(null);
 
   useEffect(() => {
@@ -714,6 +841,10 @@ const RealEstateAgentContent = () => {
   };
 
   const analyzeWithClaude = async (prompt) => {
+    if (!canAnalyze()) {
+      setShowAuthModal(true);
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -726,6 +857,7 @@ const RealEstateAgentContent = () => {
 
       const data = await response.json();
       if (data.error) throw new Error(data.error);
+      incrementAnalysisCount();
       setAnalysis(data.content);
     } catch (err) {
       console.error('Error:', err);
@@ -999,6 +1131,7 @@ const RealEstateAgentContent = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
         {showUploadModal && <UploadModal />}
+        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
         <div className="bg-black/30 backdrop-blur-md border-b border-white/10 relative z-50">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
@@ -1011,6 +1144,14 @@ const RealEstateAgentContent = () => {
                   <p className="text-sm text-gray-400">Global Real Estate Investment Analysis</p>
                 </div>
               </div>
+              {user ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                  <span className="text-sm text-green-300">{user.name || user.email}</span>
+                  <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-white">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">Sign In</button>
+              )}
               <LanguageSelector />
             </div>
           </div>
@@ -1026,6 +1167,7 @@ const RealEstateAgentContent = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
       {showUploadModal && <UploadModal />}
 
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
       {showCorrectionModal && currentProperty && (
         <CorrectionModal
           property={currentProperty}
@@ -1053,6 +1195,14 @@ const RealEstateAgentContent = () => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
+              {user ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                  <span className="text-sm text-green-300">{user.name || user.email}</span>
+                  <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-white">✕</button>
+                </div>
+              ) : (
+                <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">Sign In</button>
+              )}
               <LanguageSelector />
               <button onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg transition">
                 <Plus className="w-5 h-5 text-blue-400" />

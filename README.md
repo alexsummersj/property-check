@@ -19,7 +19,7 @@ AI-powered platform for analyzing real estate investments worldwide.
 - **Server:** Ubuntu + Nginx + PM2
 
 ## 👤 Author
-Created by Alex Summers
+Created by Aleksandr Pantiulin
 
 ## 📄 License
 MIT

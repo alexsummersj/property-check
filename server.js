@@ -11,6 +11,28 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
+const crypto = require('crypto');
+
+app.use(morgan('combined'));
+
+// Сервер за nginx: доверяем X-Forwarded-For, чтобы req.ip и rate-limit видели реальные IP клиентов
+app.set('trust proxy', 1);
+
+// Модели через env — при смене моделей Anthropic достаточно обновить .env без деплоя
+const MODELS = {
+  MAIN: process.env.MODEL_MAIN || 'claude-opus-5-5',
+  FAST: process.env.MODEL_FAST || 'claude-sonnet-5-5'
+};
+
+const FREE_ANALYSIS_LIMIT = parseInt(process.env.FREE_ANALYSIS_LIMIT || '3');
+
+// Rate limiters — защита от абьюза и неконтролируемых затрат на API
+const apiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please slow down' } });
+const aiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many AI requests, please wait a minute' } });
+app.use('/api', apiLimiter);
+
 // Проверка API ключа при старте
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
@@ -40,6 +62,82 @@ const fs = require('fs');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'property-check-secret-key-change-in-production';
 const USERS_FILE = './users.json';
+const QUOTAS_FILE = './quotas.json';
+
+// Атомарная запись: временный файл + rename (не оставляет битый JSON при падении)
+const atomicWrite = (file, data) => {
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, data);
+  fs.renameSync(tmp, file);
+};
+
+const loadQuotas = () => {
+  try {
+    if (fs.existsSync(QUOTAS_FILE)) return JSON.parse(fs.readFileSync(QUOTAS_FILE, 'utf8'));
+  } catch (e) {}
+  return {};
+};
+const saveQuotas = (q) => atomicWrite(QUOTAS_FILE, JSON.stringify(q, null, 2));
+
+// Возвращает пользователя по Bearer-токену (или null)
+const getUserFromReq = (req) => {
+  const h = req.headers.authorization || '';
+  if (!h.startsWith('Bearer ')) return null;
+  try {
+    const decoded = jwt.verify(h.split(' ')[1], JWT_SECRET);
+    return loadUsers().find(u => u.id === decoded.id) || null;
+  } catch (e) {
+    return null;
+  }
+};
+
+// Маппинг ошибок Anthropic SDK: по error.status вместо хрупких проверок строк
+const apiErrorStatus = (error) => [400, 401, 402, 403, 404, 429, 529].includes(error.status) ? error.status : 500;
+const describeApiError = (error, fallback) => {
+  const msg = error.message || '';
+  if (error.status === 401) return '🔑 Ошибка ключа Anthropic API (401)';
+  if (error.status === 402 || /insufficient balance/i.test(msg)) return '💳 Недостаточно средств на балансе Anthropic. Пополните баланс на console.anthropic.com';
+  if (error.status === 429) return '⏳ Превышен лимит запросов Anthropic. Повторите через минуту';
+  if (error.status === 529) return '🤖 Перегрузка серверов Anthropic. Повторите через минуту';
+  if (/could not process/i.test(msg)) return '📄 Не удалось прочитать PDF. Попробуйте другой файл.';
+  if (/too large|maximum of 32/i.test(msg)) return '📄 Файлы слишком большие (лимит Anthropic ~32MB / 100 страниц на PDF)';
+  return fallback;
+};
+
+// Квота на бесплатные анализы для анонимных (лимит на IP); с JWT — безлимит и учёт analysisCount
+const quotaLimiter = (req, res, next) => {
+  try {
+    const user = getUserFromReq(req);
+    if (user) {
+      const users = loadUsers();
+      const u = users.find(x => x.id === user.id);
+      if (u) { u.analysisCount = (u.analysisCount || 0) + 1; saveUsers(users); }
+      req.anonymousQuota = null;
+      return next();
+    }
+    const quotas = loadQuotas();
+    const ip = req.ip || 'unknown';
+    const q = quotas[ip] || { count: 0 };
+    if ((q.count || 0) >= FREE_ANALYSIS_LIMIT) {
+      return res.status(403).json({ error: 'Free analysis limit reached. Create a free account — analyses become unlimited during beta.', quotaExceeded: true });
+    }
+    req.anonymousQuota = { ip, used: q.count || 0, remaining: Math.max(0, FREE_ANALYSIS_LIMIT - (q.count || 0) - 1) };
+    next();
+  } catch (e) {
+    next();
+  }
+};
+
+const consumeQuota = (req) => {
+  try {
+    if (!req.anonymousQuota) return;
+    const quotas = loadQuotas();
+    const q = quotas[req.anonymousQuota.ip] || { count: 0 };
+    q.count = (q.count || 0) + 1;
+    quotas[req.anonymousQuota.ip] = q;
+    saveQuotas(quotas);
+  } catch (e) {}
+};
 
 // Загрузка/сохранение пользователей
 const loadUsers = () => {
@@ -52,7 +150,7 @@ const loadUsers = () => {
 };
 
 const saveUsers = (users) => {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  atomicWrite(USERS_FILE, JSON.stringify(users, null, 2));
 };
 
 // Регистрация
@@ -63,17 +161,24 @@ app.post('/api/register', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
     }
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res.status(400).json({ error: 'Invalid email address' });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
     
     const users = loadUsers();
     
-    if (users.find(u => u.email === email)) {
+    if (users.find(u => u.email === normalizedEmail)) {
       return res.status(400).json({ error: 'Email already registered' });
     }
     
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = {
-      id: Date.now(),
-      email,
+      id: crypto.randomUUID(),
+      email: normalizedEmail,
       name: name || email.split('@')[0],
       password: hashedPassword,
       plan: 'free',
@@ -101,9 +206,10 @@ app.post('/api/register', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || '').trim().toLowerCase();
     
     const users = loadUsers();
-    const user = users.find(u => u.email === email);
+    const user = users.find(u => u.email === normalizedEmail);
     
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
@@ -153,7 +259,7 @@ app.get('/api/me', (req, res) => {
 });
 
 // API endpoint для анализа
-app.post('/api/analyze', async (req, res) => {
+app.post('/api/analyze', aiLimiter, quotaLimiter, async (req, res) => {
   try {
     if (!API_KEY || API_KEY === 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
       return res.status(500).json({ 
@@ -161,23 +267,32 @@ app.post('/api/analyze', async (req, res) => {
       });
     }
 
-    const { prompt } = req.body;
+    const { prompt, webSearch } = req.body;
     
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
+    if (String(prompt).length > 8000) {
+      return res.status(400).json({ error: 'Prompt is too long (max 8000 characters)' });
+    }
 
     console.log('📤 Отправляю запрос в Claude API...');
     
-    const message = await anthropic.messages.create({
-      model: 'claude-opus-5-5',
-      max_tokens: 2000,
+    const requestOptions = {
+      model: MODELS.MAIN,
+      max_tokens: webSearch ? 4000 : 2000,
       messages: [{ role: 'user', content: prompt }]
-    });
+    };
+    // Для новостных запросов включаем веб-поиск Claude (свежие данные о проекте/районе)
+    if (webSearch) {
+      requestOptions.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
+    }
+
+    const message = await anthropic.messages.create(requestOptions);
 
     console.log('✅ Ответ получен!');
 
-    if (!message || !message.content || !message.content[0] || !getText(message)) {
+    if (!message || !message.content || !getText(message)) {
       console.error('⚠️ Неожиданный формат ответа:', JSON.stringify(message, null, 2));
       return res.status(500).json({ 
         error: 'Неожиданный формат ответа от API',
@@ -185,26 +300,25 @@ app.post('/api/analyze', async (req, res) => {
       });
     }
 
+    consumeQuota(req);
     res.json({ 
-      content: getText(message) 
+      content: getText(message),
+      remainingQuota: req.anonymousQuota ? req.anonymousQuota.remaining : null
     });
     
   } catch (error) {
     console.error('❌ Ошибка API:', error.message);
     
-    let errorMessage = 'Ошибка при получении анализа';
-    
+    let errorMessage;
     if (error.message.includes('401') || error.message.includes('authentication')) {
       errorMessage = '🔑 Неверный API ключ! Проверьте ключ в файле .env';
-    } else if (error.message.includes('429')) {
-      errorMessage = '⏳ Превышен лимит запросов. Подождите минуту и попробуйте снова';
-    } else if (error.message.includes('insufficient')) {
-      errorMessage = '💳 Недостаточно средств на балансе Anthropic. Пополните баланс на console.anthropic.com';
     } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
       errorMessage = '🌐 Нет подключения к интернету';
+    } else {
+      errorMessage = describeApiError(error, 'Ошибка при получении анализа');
     }
     
-    res.status(500).json({ 
+    res.status(apiErrorStatus(error)).json({ 
       error: errorMessage,
       details: error.message 
     });
@@ -212,7 +326,7 @@ app.post('/api/analyze', async (req, res) => {
 });
 
 // Parse property from text input
-app.post('/api/parse-text', async (req, res) => {
+app.post('/api/parse-text', aiLimiter, async (req, res) => {
   try {
     const { text } = req.body;
     
@@ -222,7 +336,7 @@ app.post('/api/parse-text', async (req, res) => {
 
     // Шаг 1: Валидация - это вообще про недвижимость?
     const validationResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-5-5',
+      model: MODELS.FAST,
       max_tokens: 100,
       messages: [{
         role: 'user',
@@ -242,7 +356,7 @@ Text: "${text.substring(0, 500)}"`
 
     // Шаг 2: Парсинг данных
     const message = await anthropic.messages.create({
-      model: 'claude-opus-5-5',
+      model: MODELS.MAIN,
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -256,7 +370,8 @@ Return ONLY valid JSON (no markdown, no backticks):
   "location": "Full location/address",
   "type": "Apartment/Villa/Townhouse/Penthouse/Studio",
   "price": <number only, no currency>,
-  "size": <number in sq.ft or sq.m>,
+  "size": <number>,
+  "sizeUnits": "sqft or m2 (units from the text)",
   "completion": "Q1 2025 or Ready or Under Construction",
   "developer": "Developer name",
   "bedrooms": <number or null>,
@@ -293,7 +408,7 @@ Extract numbers from text like "2.25M" = 2250000, "850sft" = 850.`
 });
 
 // Endpoint для парсинга НЕСКОЛЬКИХ PDF файлов
-app.post('/api/parse-property', async (req, res) => {
+app.post('/api/parse-property', aiLimiter, async (req, res) => {
   try {
     if (!API_KEY || API_KEY === 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
       return res.status(500).json({ 
@@ -305,6 +420,18 @@ app.post('/api/parse-property', async (req, res) => {
     
     if (!files || !Array.isArray(files) || files.length === 0) {
       return res.status(400).json({ error: 'PDF файлы не предоставлены' });
+    }
+    if (files.length > 8) {
+      return res.status(400).json({ error: 'Too many files — max 8 PDFs at once' });
+    }
+    // Быстрые серверные проверки до обращения к API: это PDF? не гигантский?
+    for (const f of files) {
+      if (!f || typeof f.pdfBase64 !== 'string' || !f.pdfBase64.startsWith('JVBER')) {
+        return res.status(400).json({ error: 'Not a valid PDF file: ' + ((f && f.fileName) || 'unnamed') });
+      }
+      if (f.pdfBase64.length > 20 * 1024 * 1024) {
+        return res.status(400).json({ error: 'File too large (max ~15 MB): ' + (f.fileName || 'unnamed') });
+      }
     }
 
     console.log(`📄 Парсинг ${files.length} PDF файлов:`);
@@ -338,7 +465,8 @@ app.post('/api/parse-property', async (req, res) => {
   "location": "Район (например: Palm Jumeirah, Dubai Marina, Downtown Dubai)",
   "type": "Тип недвижимости (например: 2BR Apartment, 5BR Duplex, Villa)",
   "price": число в AED без запятых (например: 21712896),
-  "size": площадь в кв.футах как число (например: 4306.32),
+  "size": площадь как число (например: 4306.32),
+  "sizeUnits": "sqft или m2 — единица измерения площади из документа",
   "completion": "Срок сдачи (например: Q4 2027)",
   "developer": "Название застройщика",
   "paymentPlan": "План оплаты если есть (например: 50/50, 60/40)",
@@ -358,35 +486,35 @@ app.post('/api/parse-property', async (req, res) => {
 Объедини информацию из всех документов для максимально полной картины.`
     });
 
-// Валидация: это вообще про недвижимость?
-    const validationResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-5-5',
-      max_tokens: 100,
-      messages: [{
-        role: 'user',
-        content: [
-          contentParts[0],
-          {
-            type: 'text',
-            text: 'Is this document about real estate property (apartment, house, villa, land, commercial property for sale/rent/investment)? Answer only "YES" or "NO".'
-          }
-        ]
-      }]
-    });
-
-    const isValidPdf = getText(validationResponse).trim().toUpperCase().includes('YES');
-    
-    if (!isValidPdf) {
-      console.log('❌ PDF не про недвижимость');
-      return res.status(400).json({ 
-        error: 'This document doesn\'t appear to be about real estate. Please upload a property brochure, listing, or sales document.' 
+    // Валидация: проверяем КАЖДЫЙ файл дешёвой моделью, что это недвижимость
+    for (let i = 0; i < files.length; i++) {
+      const validationResponse = await anthropic.messages.create({
+        model: MODELS.FAST,
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: files[i].pdfBase64 } },
+            {
+              type: 'text',
+              text: 'Is this document about real estate property (apartment, house, villa, land, commercial property for sale/rent/investment)? Answer only "YES" or "NO".'
+            }
+          ]
+        }]
       });
+
+      if (!getText(validationResponse).trim().toUpperCase().includes('YES')) {
+        console.log('❌ PDF не про недвижимость:', files[i].fileName);
+        return res.status(400).json({ 
+          error: '"' + (files[i].fileName || 'Uploaded file') + '\' does not appear to be about real estate. Please upload a property brochure, listing, or sales document.' 
+        });
+      }
     }
     
-    console.log('✅ PDF валидация пройдена');
+    console.log('✅ PDF валидация пройдена (' + files.length + ' files)');
     
     const message = await anthropic.messages.create({
-      model: 'claude-opus-5-5',
+      model: MODELS.MAIN,
       max_tokens:8000,
       messages: [{
         role: 'user',
@@ -419,17 +547,8 @@ app.post('/api/parse-property', async (req, res) => {
   } catch (error) {
     console.error('❌ Ошибка парсинга PDF:', error.message);
     
-    let errorMessage = 'Ошибка при парсинге PDF';
-    if (error.message.includes('401')) {
-      errorMessage = '🔑 Неверный API ключ!';
-    } else if (error.message.includes('Could not process')) {
-      errorMessage = '📄 Не удалось прочитать PDF. Попробуйте другой файл.';
-    } else if (error.message.includes('too large')) {
-      errorMessage = '📄 Файлы слишком большие. Попробуйте загрузить меньше файлов.';
-    }
-    
-    res.status(500).json({ 
-      error: errorMessage,
+    res.status(apiErrorStatus(error)).json({ 
+      error: describeApiError(error, 'Ошибка при парсинге PDF'),
       details: error.message 
     });
   }
@@ -437,7 +556,7 @@ app.post('/api/parse-property', async (req, res) => {
 
 // Endpoint для оценки риска объекта
 
-app.post('/api/assess-risk', async (req, res) => {
+app.post('/api/assess-risk', aiLimiter, async (req, res) => {
   try {
     if (!API_KEY || API_KEY === 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
       return res.status(500).json({ error: '🔑 API ключ не настроен!' });
@@ -515,7 +634,7 @@ app.post('/api/assess-risk', async (req, res) => {
     const currency = getCurrency(property.location);
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-5-5',
+      model: MODELS.MAIN,
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -528,7 +647,7 @@ Property Details:
 - Location: ${property.location}
 - Type: ${property.type}
 - Price: ${property.price} ${currency} (use this EXACT price and currency in your analysis)
-- Size: ${property.size} sq.ft
+- Size: ${property.size} ${property.sizeUnits || 'sqft'}
 - Completion: ${property.completion}
 - Developer: ${property.developer}
 - Payment Plan: ${property.paymentPlan || 'Not specified'}
@@ -575,12 +694,12 @@ Return ONLY valid JSON (no markdown, no \`\`\`):
     
   } catch (error) {
     console.error('❌ Ошибка оценки риска:', error.message);
-    res.status(500).json({ error: 'Ошибка при оценке риска', details: error.message });
+    res.status(apiErrorStatus(error)).json({ error: describeApiError(error, 'Ошибка при оценке риска'), details: error.message });
   }
 });
 
 // Endpoint для уточнения/корректировки данных объекта
-app.post('/api/correct-property', async (req, res) => {
+app.post('/api/correct-property', aiLimiter, async (req, res) => {
   try {
     if (!API_KEY || API_KEY === 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx') {
       return res.status(500).json({ 
@@ -598,7 +717,7 @@ app.post('/api/correct-property', async (req, res) => {
     console.log(`   Заметка: ${correction}`);
     
     const message = await anthropic.messages.create({
-      model: 'claude-opus-5-5',
+      model: MODELS.MAIN,
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -671,16 +790,28 @@ app.post('/api/correct-property', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Ошибка обработки уточнения:', error.message);
-    res.status(500).json({ 
-      error: 'Ошибка при обработке уточнения',
+    res.status(apiErrorStatus(error)).json({ 
+      error: describeApiError(error, 'Ошибка при обработке уточнения'),
       details: error.message 
     });
   }
 });
 
+// Статус бесплатной квоты — для отображения на фронте
+app.get('/api/quota', (req, res) => {
+  const user = getUserFromReq(req);
+  const quotas = loadQuotas();
+  const q = quotas[req.ip] || { count: 0 };
+  res.json({
+    authenticated: !!user,
+    used: user ? (user.analysisCount || 0) : (q.count || 0),
+    limit: user ? null : FREE_ANALYSIS_LIMIT
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ status: 'ok', message: 'Server is running', version: require('./package.json').version, models: MODELS });
 });
 
 // Отдаём собранный фронтенд

@@ -7,4 +7,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    proxy: {
+      // Dev-режим: /api запросы идут на бэкенд (node server.js, порт 3001)
+      '/api': 'http://localhost:3001'
+    }
+  },
 })

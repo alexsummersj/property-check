@@ -89,3 +89,17 @@ Response:
     "fieldsChanged": ["price"]
 } }
 ```
+
+---
+
+## Revision v2 (hardening)
+
+- Rate limits: all `/api/*` — 60 req/min per IP; AI endpoints — 20 req/min per IP (`429` + JSON error).
+- Server-side quota: anonymous users get `FREE_ANALYSIS_LIMIT` (default 3) analyses per IP on `/api/analyze`. Exceeded → `403 { quotaExceeded: true }`.
+- Requests with `Authorization: Bearer <jwt>` bypass the quota; `analysisCount` is tracked server-side.
+- `POST /api/analyze` accepts `webSearch: true` — enables Claude built-in web search (used for the "News" analysis; `max_tokens` raised to 4000).
+- `POST /api/parse-property` now validates EVERY uploaded PDF (not just the first), rejects non-PDF magic bytes, files > ~15 MB and > 8 files per request.
+- `parse-property` / `parse-text` responses include `property.sizeUnits` (`"sqft"` | `"m2"`).
+- New `GET /api/quota` — `{ authenticated, used, limit }` for current IP or authenticated user.
+- Env: `MODEL_MAIN`, `MODEL_FAST`, `FREE_ANALYSIS_LIMIT` (see `.env.example`) — model IDs no longer require a code change.
+- Error mapping now uses Anthropic SDK `error.status` (401/402/429/529) instead of string matching.

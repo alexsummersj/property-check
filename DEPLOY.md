@@ -59,3 +59,22 @@ tail -f /root/.pm2/logs/property-check-error.log
 3. `npm run build` in `frontend/`
 4. Nginx vhost + certbot certificate
 5. `pm2 start server.js --name property-check && pm2 save`
+
+## Rollback
+
+Backend-only change:
+```bash
+cd /var/www/property-check
+git log --oneline -5          # pick the previous good commit
+git reset --hard <commit>
+npm install                   # if package.json changed
+pm2 restart property-check
+curl -s localhost:3001/api/health
+```
+Frontend also changed → additionally `cd frontend && npm run build`.
+
+Checkpoints: `380ba8b` = raw prod state before the v2 hardening revision.
+
+## Deploy v2 note
+
+`npm install` is required once (new deps: `express-rate-limit`, `morgan`). Anonymous quota is stored in `quotas.json` (add to backups together with `users.json`).

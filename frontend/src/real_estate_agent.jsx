@@ -135,8 +135,8 @@ const formatPrice = (price, location) => {
   return `${symbol}${price.toLocaleString()}`;
 };
 
-// Определение единицы площади по региону
-const formatArea = (size, location) => {
+// Определение единицы площади: явные единицы из документа приоритетны, иначе эвристика по региону
+const formatArea = (size, location, sizeUnits) => {
   if (!size) return 'N/A';
   const loc = (location || '').toLowerCase();
   
@@ -154,6 +154,15 @@ const formatArea = (size, location) => {
   ];
   
   const useMetric = metricRegions.some(region => loc.includes(region));
+  const units = String(sizeUnits || '').toLowerCase();
+  
+  // Если документ указал единицы измерения — доверяем им, а не эвристике
+  if (units === 'm2' || units === 'm²' || units === 'sqm') {
+    return useMetric ? `${Math.round(size)} m²` : `${Math.round(size * 10.76)} sqft`;
+  }
+  if (units === 'sqft' || units === 'sq ft' || units === 'sq.ft') {
+    return useMetric ? `${Math.round(size * 0.0929)} m²` : `${size} sqft`;
+  }
   
   if (useMetric) {
     // Если размер явно в sqft (большое число), конвертируем в м²
@@ -429,7 +438,7 @@ const CorrectionModal = ({ property, onClose, onCorrection, loading }) => {
             <div><span className="text-gray-500">{t('objects.completion')}:</span> <span className="text-white">{property.completion}</span></div>
             <div><span className="text-gray-500">{t('stats.developer')}:</span> <span className="text-white">{property.developer}</span></div>
             <div><span className="text-gray-500">{t('objects.price')}:</span> <span className="text-white">{formatPrice(property.price, property.location)}</span></div>
-            <div><span className="text-gray-500">{t('labels.area')}:</span> <span className="text-white">{formatArea(property.size, property.location)}</span></div>
+            <div><span className="text-gray-500">{t('labels.area')}:</span> <span className="text-white">{formatArea(property.size, property.location, property.sizeUnits)}</span></div>
           </div>
         </div>
 
@@ -783,6 +792,7 @@ const RealEstateAgentContent = () => {
           type: data.property.type || 'Not specified',
           price: data.property.price || 0,
           size: data.property.size || 0,
+          sizeUnits: data.property.sizeUnits || null,
           completion: data.property.completion || 'Not specified',
           developer: data.property.developer || 'Not specified',
           paymentPlan: data.property.paymentPlan,
@@ -826,10 +836,13 @@ const RealEstateAgentContent = () => {
   const handleFileSelect = (e) => { if (e.target.files.length > 0) handleFilesSelected(e.target.files); e.target.value = ''; };
 
   const handleDeleteProperty = (id) => {
-    setProperties(prev => prev.filter(p => p.id !== id));
+    const remaining = properties.filter(p => p.id !== id);
+    setProperties(remaining);
     setRisks(prev => { const newRisks = { ...prev }; delete newRisks[id]; return newRisks; });
     if (selectedProperty?.id === id) {
-      setSelectedProperty(properties.length > 1 ? properties.find(p => p.id !== id) : null);
+      // Выбираем соседа по индексу, а не всегда первый объект
+      const idx = properties.findIndex(p => p.id === id);
+      setSelectedProperty(remaining[Math.min(idx, remaining.length - 1)] || null);
     }
   };
 
@@ -840,7 +853,7 @@ const RealEstateAgentContent = () => {
     setPendingFiles([]);
   };
 
-  const analyzeWithClaude = async (prompt) => {
+  const analyzeWithClaude = async (prompt, opts = {}) => {
     if (!canAnalyze()) {
       setShowAuthModal(true);
       return;
@@ -849,13 +862,19 @@ const RealEstateAgentContent = () => {
     setError(null);
 
     try {
+      let token = null;
+      try { token = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN); } catch {}
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, language })
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ prompt, language, webSearch: !!opts.webSearch })
       });
 
       const data = await response.json();
+      if (response.status === 403 && data.quotaExceeded) {
+        setShowAuthModal(true);
+        throw new Error(data.error || 'Free limit reached — create a free account to continue');
+      }
       if (data.error) throw new Error(data.error);
       incrementAnalysisCount();
       setAnalysis(data.content);
@@ -910,7 +929,7 @@ const RealEstateAgentContent = () => {
         prompt = `Today is ${today}. Find latest news about ${prop.location} area and developer ${prop.developer}.${correctionsContext} ${langInstruction} Max 500 words.`;
         break;
       case 'growth':
-        prompt = `Today is ${today}. Analyze growth potential for property in ${prop.location}. Price: ${prop.price}, size: ${formatArea(prop.size, prop.location)}, completion: ${prop.completion}.${extraContext}${correctionsContext} 3-5 year forecast. ${langInstruction}`;
+        prompt = `Today is ${today}. Analyze growth potential for property in ${prop.location}. Price: ${prop.price}, size: ${formatArea(prop.size, prop.location, prop.sizeUnits)}, completion: ${prop.completion}.${extraContext}${correctionsContext} 3-5 year forecast. ${langInstruction}`;
         break;
       case 'risks':
         prompt = `Today is ${today}. Evaluate investment risks for ${prop.name} in ${prop.location}. Developer: ${prop.developer}. Completion: ${prop.completion}.${extraContext}${correctionsContext} ${langInstruction}`;
@@ -922,10 +941,10 @@ const RealEstateAgentContent = () => {
         prompt = `Today is ${today}. Analyze construction timeline in ${prop.location}. Project ${prop.name} completion ${prop.completion}. Developer: ${prop.developer}.${correctionsContext} Are timelines realistic? ${langInstruction}`;
         break;
       default:
-        prompt = `Today is ${today}. Overview of property: ${prop.name} in ${prop.location}. Type: ${prop.type}, price: ${prop.price}, size: ${formatArea(prop.size, prop.location)}, completion: ${prop.completion}, developer: ${prop.developer}.${extraContext}${correctionsContext} Rate on 10-point scale. ${langInstruction}`;
+        prompt = `Today is ${today}. Overview of property: ${prop.name} in ${prop.location}. Type: ${prop.type}, price: ${prop.price}, size: ${formatArea(prop.size, prop.location, prop.sizeUnits)}, completion: ${prop.completion}, developer: ${prop.developer}.${extraContext}${correctionsContext} Rate on 10-point scale. ${langInstruction}`;
     }
 
-    analyzeWithClaude(prompt);
+    analyzeWithClaude(prompt, { webSearch: type === 'news' });
   };
 
   const handleCustomQuery = () => {
@@ -938,7 +957,7 @@ const RealEstateAgentContent = () => {
 
     const langInstruction = getLangInstruction();
 
-    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
+    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location, prop.sizeUnits)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
     analyzeWithClaude(contextPrompt);
     setQuery('');
   };
@@ -991,6 +1010,7 @@ const RealEstateAgentContent = () => {
             type: data.property.type || 'Not specified',
             price: data.property.price || 0,
             size: data.property.size || 0,
+            sizeUnits: data.property.sizeUnits || null,
             completion: data.property.completion || 'Not specified',
             developer: data.property.developer || 'Not specified',
             bedrooms: data.property.bedrooms,

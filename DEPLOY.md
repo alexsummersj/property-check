@@ -86,3 +86,8 @@ Checkpoints: `380ba8b` = raw prod state before the v2 hardening revision;
 No new npm deps. New endpoints: `GET/PUT /api/properties`, `POST /api/analyze/stream` (SSE; nginx buffering is disabled via the `X-Accel-Buffering: no` response header). Keep `package-lock.json` in sync with `package.json` — GitHub Actions CI runs `npm ci` and fails on drift. Backup cron now runs `/usr/local/bin/pc-backup.sh` (includes `properties.json`, 14-day retention).
 
 Backups: cron (03:15 UTC) archives `users.json`, `quotas.json`, `properties.json`, `.env` into `/root/backups/pc-data-<date>.tar.gz`, kept 14 days.
+
+## Deploy v3.1 note (live data in analyses)
+
+Frontend + backend change: every analysis mode now passes `webSearch: true`, and both analyze endpoints send an analyst `system` prompt (`analystSystem()` in `server.js`). Rollback = `git reset --hard 564f830` + rebuild + restart.
+Optional env knob: `WEB_SEARCH_MAX_USES` (default 5) — Anthropic bills web search separately (~$10 / 1000 searches), lower it if the bill grows. Left-side panels (PDF parse, Risk Score) are still non-streamed JSON.

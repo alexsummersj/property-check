@@ -387,7 +387,7 @@ app.post('/api/parse-property', async (req, res) => {
     
     const message = await anthropic.messages.create({
       model: 'claude-opus-5-5',
-      max_tokens: 4000,
+      max_tokens:8000,
       messages: [{
         role: 'user',
         content: contentParts

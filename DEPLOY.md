@@ -12,7 +12,7 @@
 | Domains | `property-check.com`, `www.property-check.com` (DNS A/CNAME → `167.71.49.80`) |
 | TLS | Let's Encrypt via certbot, HTTP→HTTPS redirect |
 | Secrets | `/var/www/property-check/.env` (`ANTHROPIC_API_KEY`, `JWT_SECRET`) |
-| Data | `/var/www/property-check/users.json` — back it up! |
+| Data | `/var/www/property-check/users.json`, `quotas.json`, `properties.json` — backed up daily |
 
 > Note: production was migrated from the old DigitalOcean droplet `174.138.28.202`
 > (Oct 2026). The original `users.json` may still live on the old droplet.
@@ -73,10 +73,15 @@ curl -s localhost:3001/api/health
 ```
 Frontend also changed → additionally `cd frontend && npm run build`.
 
-Checkpoints: `380ba8b` = raw prod state before the v2 hardening revision.
+Checkpoints: `380ba8b` = raw prod state before the v2 hardening revision;
+`8e8d4d8` = deployed v2 (rollback target for the v3 series).
 
 ## Deploy v2 note
 
 `npm install` is required once (new deps: `express-rate-limit`, `morgan`). Anonymous quota is stored in `quotas.json` (add to backups together with `users.json`).
+
+## Deploy v3 note (server storage + streaming + CI)
+
+No new npm deps. New endpoints: `GET/PUT /api/properties`, `POST /api/analyze/stream` (SSE; nginx buffering is disabled via the `X-Accel-Buffering: no` response header). Keep `package-lock.json` in sync with `package.json` — GitHub Actions CI runs `npm ci` and fails on drift. Backup cron now runs `/usr/local/bin/pc-backup.sh` (includes `properties.json`, 14-day retention).
 
 Backups: cron (03:15 UTC) archives `users.json`, `quotas.json`, `properties.json`, `.env` into `/root/backups/pc-data-<date>.tar.gz`, kept 14 days.

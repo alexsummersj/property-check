@@ -1041,7 +1041,9 @@ const RealEstateAgentContent = () => {
         prompt = `Today is ${today}. Overview of property: ${prop.name} in ${prop.location}. Type: ${prop.type}, price: ${prop.price}, size: ${formatArea(prop.size, prop.location, prop.sizeUnits)}, completion: ${prop.completion}, developer: ${prop.developer}.${extraContext}${correctionsContext} Rate on 10-point scale. ${langInstruction}`;
     }
 
-    analyzeWithClaude(prompt, { webSearch: type === 'news' });
+    // Веб-поиск включён для всех режимов: без него Claude отвечает по весам модели
+    // и приклеивает дисклеймер про устаревшие данные
+    analyzeWithClaude(prompt, { webSearch: true });
   };
 
   const handleCustomQuery = () => {
@@ -1055,7 +1057,7 @@ const RealEstateAgentContent = () => {
     const langInstruction = getLangInstruction();
 
     const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location, prop.sizeUnits)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
-    analyzeWithClaude(contextPrompt);
+    analyzeWithClaude(contextPrompt, { webSearch: true });
     setQuery('');
   };
 

@@ -24,8 +24,14 @@ Request: `{ "email": "...", "password": "..." }` → same response as `/register
 
 ## POST `/analyze`
 Free-form AI analysis (investment questions, comparisons, market info).
-Request: `{ "prompt": "Is Palm Jumeirah a good investment?" }`
+Request: `{ "prompt": "Is Palm Jumeirah a good investment?", "webSearch": true }`
 Response: `{ "content": "<AI answer text>" }`
+
+`webSearch: true` (the frontend sends it for every analysis mode) enables Claude's
+built-in `web_search` tool — up to `WEB_SEARCH_MAX_USES` searches (default 5) — so the
+answer uses live prices/news instead of the model's training data. Both `/analyze` and
+`/analyze/stream` send a shared analyst `system` prompt that fixes today's date, tells the
+model to search for time-sensitive numbers and forbids "my data ends at <cutoff>" disclaimers.
 
 ## POST `/parse-property`
 Main endpoint: parse **one or several PDFs** about the same property into one card.
@@ -113,3 +119,13 @@ Response:
 - `POST /api/analyze/stream` — same analysis as `/api/analyze` but Server-Sent Events: `data: {"delta":"..."}` chunks, then `data: {"done":true,...}`; errors arrive as `data: {"error":"..."}`. Rate limit + quota identical.
 - Frontend: localStorage remains a cache; list is pulled on load/login and pushed with 1.2 s debounce. Anonymous browser data migrates to the server on first visit (keyed by generated `pc_client_id`).
 - CI: GitHub Actions (`node --check` + frontend build) runs on every push to main.
+
+---
+
+## Revision v3.1 (live data in analyses)
+
+- Every analysis mode (Overview / News / Growth / Risks / Areas / Timeline / custom question) now sends `webSearch: true`, so Claude runs its built-in `web_search` tool instead of answering from training weights.
+- Shared `system` prompt (`analystSystem()` in `server.js`) is sent with both `/analyze` and `/analyze/stream`: pins today's date, instructs the model to search for time-sensitive numbers, forbids "my data goes up to mid-2025" style disclaimers, and requires source + date next to searched numbers.
+- `max_uses` is configurable via `WEB_SEARCH_MAX_USES` (default 5, was hardcoded 3 and News-only); `max_tokens` with search raised to 6000 on both endpoints.
+- Left-side panels (property card from PDF, Risk Score, corrections) are still non-streamed — they return structured JSON, not prose.
+- Cost note: web search is billed by Anthropic separately (~$10 / 1000 searches) and adds a few seconds before the first streamed token; quota accounting is unchanged (quota is consumed only when the stream completes).

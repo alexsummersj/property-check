@@ -28,6 +28,27 @@ const MODELS = {
 
 const FREE_ANALYSIS_LIMIT = parseInt(process.env.FREE_ANALYSIS_LIMIT || '3');
 
+// Единый системный промпт для аналитических эндпоинтов.
+// Без него Claude пишет «мои данные примерно до середины 2025» и отказывается
+// давать актуальные цифры, а веб-поиск без явной инструкции не использует.
+function analystSystem() {
+  const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+  return `You are a senior real-estate investment analyst advising a private investor.
+Today is ${today}.
+
+Research rules:
+- If the web_search tool is available, USE IT for anything time-sensitive: prices, price per sq ft, transaction volumes, project and completion status, handover delays, supply pipeline, news, regulation, developer track record. Search more than once when needed.
+- Never mention your training-data cutoff. Never write disclaimers like "my data goes up to mid-2025" and never apologize for lacking recent data — search for it instead.
+- If a figure is genuinely unavailable, give a reasoned range and say in one short line what it is based on. Do not repeat this caveat more than once in the answer.
+- When a number comes from a search result, name the source and its date in parentheses.
+- Separate structural facts (which change slowly) from market numbers (which change fast).
+
+Style: concrete and quantitative, no filler, no generic investment advice, no marketing tone. Answer in the language requested by the user.`;
+}
+
+// Сколько поисковых запросов разрешаем на один анализ
+const WEB_SEARCH_MAX_USES = parseInt(process.env.WEB_SEARCH_MAX_USES || '5');
+
 // Rate limiters — защита от абьюза и неконтролируемых затрат на API
 const apiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please slow down' } });
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many AI requests, please wait a minute' } });
@@ -292,12 +313,13 @@ app.post('/api/analyze', aiLimiter, quotaLimiter, async (req, res) => {
     
     const requestOptions = {
       model: MODELS.MAIN,
-      max_tokens: webSearch ? 4000 : 2000,
+      max_tokens: webSearch ? 6000 : 2000,
+      system: analystSystem(),
       messages: [{ role: 'user', content: prompt }]
     };
-    // Для новостных запросов включаем веб-поиск Claude (свежие данные о проекте/районе)
+    // Веб-поиск Claude: свежие данные о проекте/районе/рынке вместо устаревших весов модели
     if (webSearch) {
-      requestOptions.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
+      requestOptions.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: WEB_SEARCH_MAX_USES }];
     }
 
     const message = await anthropic.messages.create(requestOptions);
@@ -357,10 +379,11 @@ app.post('/api/analyze/stream', aiLimiter, quotaLimiter, async (req, res) => {
     const requestOptions = {
       model: MODELS.MAIN,
       max_tokens: webSearch ? 6000 : 2000,
+      system: analystSystem(),
       messages: [{ role: 'user', content: prompt }]
     };
     if (webSearch) {
-      requestOptions.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
+      requestOptions.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: WEB_SEARCH_MAX_USES }];
     }
 
     console.log('📡 Стриминг запроса в Claude API...');

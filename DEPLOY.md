@@ -1,0 +1,61 @@
+# 🚀 Deployment Runbook — property-check.com
+
+## Production topology (since Oct 2026)
+
+| Item | Value |
+|---|---|
+| Server | Shared Ubuntu droplet `167.71.49.80` (also hosts `orbits`, `folio`) |
+| App directory | `/var/www/property-check` |
+| Backend | PM2 process **`property-check`** → `node server.js` on `127.0.0.1:3001` |
+| Frontend | Static `frontend/dist/` (Vite build), served by Nginx |
+| Nginx vhost | `/etc/nginx/sites-available/property-check.conf` |
+| Domains | `property-check.com`, `www.property-check.com` (DNS A/CNAME → `167.71.49.80`) |
+| TLS | Let's Encrypt via certbot, HTTP→HTTPS redirect |
+| Secrets | `/var/www/property-check/.env` (`ANTHROPIC_API_KEY`, `JWT_SECRET`) |
+| Data | `/var/www/property-check/users.json` — back it up! |
+
+> Note: production was migrated from the old DigitalOcean droplet `174.138.28.202`
+> (Oct 2026). The original `users.json` may still live on the old droplet.
+
+## Nginx essentials
+The vhost must allow big uploads and slow AI calls:
+```nginx
+client_max_body_size 100m;
+proxy_read_timeout 300s;
+proxy_send_timeout 300s;
+proxy_pass http://127.0.0.1:3001;
+```
+
+## Deploying an update
+```bash
+ssh root@167.71.49.80
+cd /var/www/property-check
+git pull
+cd frontend && npm ci && npm run build && cd ..
+pm2 restart property-check
+curl -s http://127.0.0.1:3001/api/health   # {"status":"ok",...}
+```
+
+## Logs & status
+```bash
+pm2 ls
+pm2 logs property-check --lines 50
+tail -f /root/.pm2/logs/property-check-error.log
+```
+
+## Troubleshooting
+| Symptom | Cause | Fix |
+|---|---|---|
+| `404 not_found_error — model: <id>` in logs | Anthropic retired a hardcoded model ID | Update `model:` entries in `server.js`, restart PM2 |
+| `Cannot read properties of undefined (reading 'replace')` | Response starts with a `thinking` block | Extract text via `getText(message)`, not `content[0].text` |
+| `413 Request Entity Too Large` | Nginx body limit | Raise `client_max_body_size` |
+| `504 Gateway Timeout` | Claude call longer than proxy timeout | Raise `proxy_read_timeout` |
+| `🔑 API ключ не настроен` | Missing `.env` / placeholder key | Fix `.env`, `pm2 restart property-check` |
+| `401` from Anthropic | Bad/disabled API key or zero balance | Check console.anthropic.com billing |
+
+## First-time server setup (what was installed)
+1. Node.js 22 LTS + PM2
+2. `git clone` into `/var/www/property-check`, `npm install` in root and `frontend/`
+3. `npm run build` in `frontend/`
+4. Nginx vhost + certbot certificate
+5. `pm2 start server.js --name property-check && pm2 save`

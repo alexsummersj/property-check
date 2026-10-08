@@ -34,6 +34,7 @@ const anthropic = new Anthropic({
 });
 
 const jwt = require('jsonwebtoken');
+const getText = (m) => { const b = ((m && m.content) || []).find(x => x.type === 'text'); return b ? b.text : ''; };
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 
@@ -169,14 +170,14 @@ app.post('/api/analyze', async (req, res) => {
     console.log('📤 Отправляю запрос в Claude API...');
     
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-opus-5-5',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }]
     });
 
     console.log('✅ Ответ получен!');
 
-    if (!message || !message.content || !message.content[0] || !message.content[0].text) {
+    if (!message || !message.content || !message.content[0] || !getText(message)) {
       console.error('⚠️ Неожиданный формат ответа:', JSON.stringify(message, null, 2));
       return res.status(500).json({ 
         error: 'Неожиданный формат ответа от API',
@@ -185,7 +186,7 @@ app.post('/api/analyze', async (req, res) => {
     }
 
     res.json({ 
-      content: message.content[0].text 
+      content: getText(message) 
     });
     
   } catch (error) {
@@ -221,7 +222,7 @@ app.post('/api/parse-text', async (req, res) => {
 
     // Шаг 1: Валидация - это вообще про недвижимость?
     const validationResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-5-5',
       max_tokens: 100,
       messages: [{
         role: 'user',
@@ -231,7 +232,7 @@ Text: "${text.substring(0, 500)}"`
       }]
     });
 
-    const isValid = validationResponse.content[0].text.trim().toUpperCase().includes('YES');
+    const isValid = getText(validationResponse).trim().toUpperCase().includes('YES');
     
     if (!isValid) {
       return res.status(400).json({ 
@@ -241,7 +242,7 @@ Text: "${text.substring(0, 500)}"`
 
     // Шаг 2: Парсинг данных
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-opus-5-5',
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -272,7 +273,7 @@ Extract numbers from text like "2.25M" = 2250000, "850sft" = 850.`
       }]
     });
 
-    const content = message.content[0].text;
+    const content = getText(message);
     
     let property;
     try {
@@ -359,7 +360,7 @@ app.post('/api/parse-property', async (req, res) => {
 
 // Валидация: это вообще про недвижимость?
     const validationResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-5-5',
       max_tokens: 100,
       messages: [{
         role: 'user',
@@ -373,7 +374,7 @@ app.post('/api/parse-property', async (req, res) => {
       }]
     });
 
-    const isValidPdf = validationResponse.content[0].text.trim().toUpperCase().includes('YES');
+    const isValidPdf = getText(validationResponse).trim().toUpperCase().includes('YES');
     
     if (!isValidPdf) {
       console.log('❌ PDF не про недвижимость');
@@ -385,7 +386,7 @@ app.post('/api/parse-property', async (req, res) => {
     console.log('✅ PDF валидация пройдена');
     
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-opus-5-5',
       max_tokens: 4000,
       messages: [{
         role: 'user',
@@ -395,7 +396,7 @@ app.post('/api/parse-property', async (req, res) => {
 
     console.log('✅ PDF файлы распарсены!');
     
-    let responseText = message.content[0].text;
+    let responseText = getText(message);
     
     // Убираем возможные markdown обёртки
     responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -514,7 +515,7 @@ app.post('/api/assess-risk', async (req, res) => {
     const currency = getCurrency(property.location);
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-opus-5-5',
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -561,7 +562,7 @@ Return ONLY valid JSON (no markdown, no \`\`\`):
 
     console.log('✅ Риск оценен!');
     
-    let responseText = message.content[0].text;
+    let responseText = getText(message);
     responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
     try {
@@ -597,7 +598,7 @@ app.post('/api/correct-property', async (req, res) => {
     console.log(`   Заметка: ${correction}`);
     
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
+      model: 'claude-opus-5-5',
       max_tokens: 2000,
       messages: [{
         role: 'user',
@@ -651,7 +652,7 @@ app.post('/api/correct-property', async (req, res) => {
 
     console.log('✅ Уточнение обработано!');
     
-    let responseText = message.content[0].text;
+    let responseText = getText(message);
     responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
     try {

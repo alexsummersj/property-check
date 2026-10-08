@@ -15,7 +15,8 @@
 | Data | `/var/www/property-check/users.json`, `quotas.json`, `properties.json` — backed up daily |
 
 > Note: production was migrated from the old DigitalOcean droplet `174.138.28.202`
-> (Oct 2026). The original `users.json` may still live on the old droplet.
+> (Oct 2026). Access to the old droplet is lost and it is considered abandoned —
+> the current `users.json` is the only source of truth for accounts.
 
 ## Nginx essentials
 The vhost must allow big uploads and slow AI calls:

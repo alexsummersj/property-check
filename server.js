@@ -81,6 +81,16 @@ const loadQuotas = () => {
 };
 const saveQuotas = (q) => atomicWrite(QUOTAS_FILE, JSON.stringify(q, null, 2));
 
+const PROPERTIES_FILE = './properties.json';
+
+const loadProperties = () => {
+  try {
+    if (fs.existsSync(PROPERTIES_FILE)) return JSON.parse(fs.readFileSync(PROPERTIES_FILE, 'utf8'));
+  } catch (e) {}
+  return {};
+};
+const saveProperties = (p) => atomicWrite(PROPERTIES_FILE, JSON.stringify(p));
+
 // Возвращает пользователя по Bearer-токену (или null)
 const getUserFromReq = (req) => {
   const h = req.headers.authorization || '';
@@ -324,6 +334,62 @@ app.post('/api/analyze', aiLimiter, quotaLimiter, async (req, res) => {
       error: errorMessage,
       details: error.message 
     });
+  }
+});
+
+// Тот же анализ, но стримингом (SSE): текст появляется по мере генерации Claude
+app.post('/api/analyze/stream', aiLimiter, quotaLimiter, async (req, res) => {
+  try {
+    const { prompt, webSearch } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+    if (String(prompt).length > 8000) {
+      return res.status(400).json({ error: 'Prompt is too long (max 8000 characters)' });
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('X-Accel-Buffering', 'no'); // nginx не буферизует ответ (проксирует молча)
+    res.flushHeaders();
+
+    const requestOptions = {
+      model: MODELS.MAIN,
+      max_tokens: webSearch ? 6000 : 2000,
+      messages: [{ role: 'user', content: prompt }]
+    };
+    if (webSearch) {
+      requestOptions.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
+    }
+
+    console.log('📡 Стриминг запроса в Claude API...');
+    const stream = anthropic.messages.stream(requestOptions);
+
+    // Клиент закрыл вкладку — прерываем генерацию, чтобы не жечь токены
+    req.on('close', () => { try { stream.abort(); } catch (e) {} });
+
+    stream.on('text', (delta) => {
+      res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+    });
+
+    await stream.finalMessage();
+
+    consumeQuota(req);
+    res.write(`data: ${JSON.stringify({ done: true, remainingQuota: req.anonymousQuota ? req.anonymousQuota.remaining : null })}\n\n`);
+    res.end();
+    console.log('✅ Стрим завершён');
+  } catch (error) {
+    console.error('❌ Ошибка stream API:', error.message);
+    const msg = (error.message.includes('network') || error.message.includes('ENOTFOUND'))
+      ? '🌐 Нет подключения к интернету'
+      : describeApiError(error, 'Ошибка при получении анализа');
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+      res.end();
+    } else {
+      res.status(apiErrorStatus(error)).json({ error: msg, details: error.message });
+    }
   }
 });
 
@@ -809,6 +875,46 @@ app.get('/api/quota', (req, res) => {
     used: user ? (user.analysisCount || 0) : (q.count || 0),
     limit: user ? null : FREE_ANALYSIS_LIMIT
   });
+});
+
+// Владелец свойств: авторизованный → user:<id>, анонимный → cid:<X-Client-Id>
+const ownerKey = (req) => {
+  const user = getUserFromReq(req);
+  if (user) return 'user:' + user.id;
+  const cid = String(req.headers['x-client-id'] || '').trim();
+  return /^[A-Za-z0-9_-]{6,64}$/.test(cid) ? 'cid:' + cid : null;
+};
+
+// Хранилище объектов недвижимости: null = на сервере ещё нет данных этого владельца
+app.get('/api/properties', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    if (!key) return res.json({ properties: null });
+    const all = loadProperties();
+    res.json({ properties: all[key] || null });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to load properties' });
+  }
+});
+
+// Полная синхронизация массива свойств от клиента (сервер хранит снапс списка)
+app.put('/api/properties', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    if (!key) return res.status(400).json({ error: 'X-Client-Id header is required for anonymous sync' });
+    const { properties } = req.body || {};
+    if (!Array.isArray(properties)) return res.status(400).json({ error: 'properties must be an array' });
+    if (properties.length > 300) return res.status(400).json({ error: 'Too many properties (max 300)' });
+    if (properties.some(p => !p || p.id === undefined || p.id === null)) {
+      return res.status(400).json({ error: 'Each property must have an id' });
+    }
+    const all = loadProperties();
+    all[key] = properties;
+    saveProperties(all);
+    res.json({ success: true, count: properties.length });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to save properties' });
+  }
 });
 
 // Health check

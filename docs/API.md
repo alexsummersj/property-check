@@ -103,3 +103,13 @@ Response:
 - New `GET /api/quota` — `{ authenticated, used, limit }` for current IP or authenticated user.
 - Env: `MODEL_MAIN`, `MODEL_FAST`, `FREE_ANALYSIS_LIMIT` (see `.env.example`) — model IDs no longer require a code change.
 - Error mapping now uses Anthropic SDK `error.status` (401/402/429/529) instead of string matching.
+
+---
+
+## Revision v3 (server storage + streaming)
+
+- `GET /api/properties` — server-side property list for the owner (JWT user → `user:<id>`, anonymous → `cid:<X-Client-Id>`). Returns `{ properties: null }` when nothing stored yet.
+- `PUT /api/properties` — full-list sync from client (`{ properties: [...] }`, max 300 items, each must have `id`). Stored in `properties.json` (atomic writes; add to backups).
+- `POST /api/analyze/stream` — same analysis as `/api/analyze` but Server-Sent Events: `data: {"delta":"..."}` chunks, then `data: {"done":true,...}`; errors arrive as `data: {"error":"..."}`. Rate limit + quota identical.
+- Frontend: localStorage remains a cache; list is pulled on load/login and pushed with 1.2 s debounce. Anonymous browser data migrates to the server on first visit (keyed by generated `pc_client_id`).
+- CI: GitHub Actions (`node --check` + frontend build) runs on every push to main.

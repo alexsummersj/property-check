@@ -259,6 +259,26 @@ const STORAGE_KEYS = {
   LANGUAGE: 'real_estate_language'
 };
 
+// Стабильный идентификатор анонимного клиента — для серверного хранения свойств до регистрации
+const CLIENT_ID_KEY = 'pc_client_id';
+const getClientId = () => {
+  try {
+    let id = localStorage.getItem(CLIENT_ID_KEY);
+    if (!id) {
+      id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+      localStorage.setItem(CLIENT_ID_KEY, id);
+    }
+    return id;
+  } catch { return 'no-cid'; }
+};
+
+const authHeader = () => {
+  try {
+    const t = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN);
+    return t ? { Authorization: `Bearer ${t}` } : {};
+  } catch { return {}; }
+};
+
 // Risk Indicator Component
 const RiskIndicator = ({ risk, loading, onRefresh, compact = false }) => {
   const [expanded, setExpanded] = useState(false);
@@ -661,6 +681,53 @@ const RealEstateAgentContent = () => {
     }
   }, [properties, selectedProperty]);
 
+  // ===== Серверное хранение объектов (localStorage остаётся локальным кэшем) =====
+  const firstSyncDoneRef = useRef(false);
+  const propertiesRef = useRef(properties);
+  useEffect(() => { propertiesRef.current = properties; }, [properties]);
+
+  const pushPropertiesToServer = (list) => {
+    try {
+      fetch('/api/properties', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Client-Id': getClientId() },
+        body: JSON.stringify({ properties: list })
+      }).catch(() => {});
+    } catch {}
+  };
+
+  const pullPropertiesFromServer = async () => {
+    try {
+      const r = await fetch('/api/properties', { headers: { ...authHeader(), 'X-Client-Id': getClientId() } });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (Array.isArray(d.properties) && d.properties.length > 0) {
+        // Слияние по id: локальная версия (возможно, отредактирована только что) приоритетнее серверной
+        setProperties(prev => {
+          const serverById = new Map(d.properties.map(p => [p.id, p]));
+          const merged = d.properties.map(p => prev.find(x => x.id === p.id) || p);
+          const localOnly = prev.filter(p => !serverById.has(p.id));
+          return [...merged, ...localOnly];
+        });
+      } else if (propertiesRef.current.length > 0) {
+        // На сервере ещё нет данных — загружаем локальные (миграция с localStorage)
+        pushPropertiesToServer(propertiesRef.current);
+      }
+    } catch {} finally {
+      firstSyncDoneRef.current = true;
+    }
+  };
+
+  // При загрузке и при входе/выходе — тянем список нового владельца с сервера
+  useEffect(() => { pullPropertiesFromServer(); }, [user]);
+
+  // Любое изменение списка — отправляем на сервер с дебаунсом (не раньше первой загрузки с сервера)
+  useEffect(() => {
+    if (!firstSyncDoneRef.current) return;
+    const t = setTimeout(() => pushPropertiesToServer(properties), 1200);
+    return () => clearTimeout(t);
+  }, [properties]);
+
   const handleCorrection = async (correctionText) => {
     if (!selectedProperty || !correctionText.trim()) return;
 
@@ -864,20 +931,50 @@ const RealEstateAgentContent = () => {
     try {
       let token = null;
       try { token = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN); } catch {}
-      const response = await fetch('/api/analyze', {
+      const response = await fetch('/api/analyze/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ prompt, language, webSearch: !!opts.webSearch })
       });
 
-      const data = await response.json();
-      if (response.status === 403 && data.quotaExceeded) {
-        setShowAuthModal(true);
-        throw new Error(data.error || 'Free limit reached — create a free account to continue');
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 403 && data.quotaExceeded) {
+          setShowAuthModal(true);
+          throw new Error(data.error || 'Free limit reached — create a free account to continue');
+        }
+        throw new Error(data.error || 'Error getting analysis');
       }
-      if (data.error) throw new Error(data.error);
+
+      if (!response.body) throw new Error('Streaming not supported in this browser');
+
+      // Читаем SSE-поток: текст анализа появляется по мере генерации
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let acc = '';
+      setAnalysis('');
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split('\n\n');
+        buffer = events.pop(); // последний фрагмент может быть неполным — до читаем
+        for (const ev of events) {
+          const line = ev.split('\n').find(l => l.startsWith('data: '));
+          if (!line) continue;
+          let payload;
+          try { payload = JSON.parse(line.slice(6)); } catch { continue; }
+          if (payload.error) throw new Error(payload.error);
+          if (payload.delta) {
+            acc += payload.delta;
+            setAnalysis(acc);
+          }
+        }
+      }
+      if (!acc.trim()) throw new Error('Empty AI response');
       incrementAnalysisCount();
-      setAnalysis(data.content);
+      setAnalysis(acc);
     } catch (err) {
       console.error('Error:', err);
       setError(err.message || 'Error getting analysis');

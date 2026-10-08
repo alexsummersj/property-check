@@ -78,3 +78,5 @@ Checkpoints: `380ba8b` = raw prod state before the v2 hardening revision.
 ## Deploy v2 note
 
 `npm install` is required once (new deps: `express-rate-limit`, `morgan`). Anonymous quota is stored in `quotas.json` (add to backups together with `users.json`).
+
+Backups: cron (03:15 UTC) archives `users.json`, `quotas.json`, `properties.json`, `.env` into `/root/backups/pc-data-<date>.tar.gz`, kept 14 days.

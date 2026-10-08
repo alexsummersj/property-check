@@ -56,7 +56,9 @@ const anthropic = new Anthropic({
 });
 
 const jwt = require('jsonwebtoken');
-const getText = (m) => { const b = ((m && m.content) || []).find(x => x.type === 'text'); return b ? b.text : ''; };
+// Собираем ВСЕ текстовые блоки ответа: у Claude 5.x перед текстом бывают thinking-блоки,
+// а при web_search текст приходит в нескольких блоках между вызовами инструмента
+const getText = (m) => ((m && m.content) || []).filter(x => x.type === 'text').map(x => x.text).join('\n\n');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 

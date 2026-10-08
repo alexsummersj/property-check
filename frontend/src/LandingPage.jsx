@@ -8,6 +8,7 @@ import {
 const LandingPage = ({ onEnterApp }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [legalDoc, setLegalDoc] = useState(null); // 'privacy' | 'terms'
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,6 +17,27 @@ const LandingPage = ({ onEnterApp }) => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const LEGAL = {
+    privacy: {
+      title: 'Privacy Policy',
+      body: [
+        'We store the minimum needed to run the service: your name and email, a bcrypt hash of your password, the properties you add and the number of analyses you have run.',
+        'Property documents you upload are sent to Anthropic (Claude API) to extract data and generate analysis. We do not sell your data.',
+        'Your property list is also cached in your browser (localStorage) and kept on our server, so you can return on another device after signing in.',
+        'Written request to hello@property-check.com — and your account with all its data is deleted.'
+      ]
+    },
+    terms: {
+      title: 'Terms of Service',
+      body: [
+        'Property Check is an AI research assistant. It provides information, not financial, legal or tax advice, and is not a licensed valuation.',
+        'Market numbers are estimates collected from open sources and may be outdated — always verify them against DLD transactions and the SPA before signing.',
+        'The service is provided "as is". We are not responsible for investment decisions made on the basis of the analysis.',
+        'During the beta, registered users get unlimited analyses; anonymous users get a limited number per device.'
+      ]
+    }
+  };
 
   const features = [
     {
@@ -176,11 +198,11 @@ const LandingPage = ({ onEnterApp }) => {
           {mobileMenuOpen && (
             <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
               <div className="flex flex-col gap-4">
-                <a href="#features" className="text-gray-300 hover:text-white transition">Features</a>
-                <a href="#how-it-works" className="text-gray-300 hover:text-white transition">How it Works</a>
-                <a href="#pricing" className="text-gray-300 hover:text-white transition">Pricing</a>
+                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">Features</a>
+                <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">How it Works</a>
+                <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">Pricing</a>
                 <button 
-                  onClick={onEnterApp}
+                  onClick={() => { setMobileMenuOpen(false); onEnterApp(); }}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-medium w-full"
                 >
                   Try Free
@@ -498,16 +520,31 @@ const LandingPage = ({ onEnterApp }) => {
               <span className="text-xl font-bold">Property Check</span>
             </div>
             <div className="flex items-center gap-8 text-gray-400 text-sm">
-              <a href="#" className="hover:text-white transition">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition">Terms of Service</a>
-              <a href="#" className="hover:text-white transition">Contact</a>
+              <button onClick={() => setLegalDoc('privacy')} className="hover:text-white transition">Privacy Policy</button>
+              <button onClick={() => setLegalDoc('terms')} className="hover:text-white transition">Terms of Service</button>
+              <a href="mailto:hello@property-check.com" className="hover:text-white transition">Contact</a>
             </div>
             <div className="text-gray-500 text-sm">
-              © 2025 Property Check. All rights reserved.
+              © {new Date().getFullYear()} Property Check. All rights reserved.
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Legal modal — ссылки в футере раньше вели в никуда (href="#") */}
+      {legalDoc && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setLegalDoc(null)}>
+          <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">{LEGAL[legalDoc].title}</h3>
+              <button onClick={() => setLegalDoc(null)} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-3 text-sm text-gray-300 leading-relaxed">
+              {LEGAL[legalDoc].body.map((line, i) => <p key={i}>{line}</p>)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

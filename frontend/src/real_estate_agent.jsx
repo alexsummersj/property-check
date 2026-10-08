@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
-import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe } from 'lucide-react';
+import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square } from 'lucide-react';
 import { translations, languages, getTranslation } from './i18n';
 
 // Auth constants
@@ -8,6 +8,16 @@ const AUTH_STORAGE_KEYS = {
   TOKEN: 'property_check_token',
   USER: 'property_check_user',
   ANALYSIS_COUNT: 'property_check_analysis_count'
+};
+
+// Любая модалка закрывается по Esc, а не только по крестику — иначе пользователь
+// может остаться запертым внутри оверлея
+const useEscapeClose = (onClose) => {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape' && onClose) onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 };
 
 // Умное определение валюты по локации
@@ -434,10 +444,11 @@ const EmptyState = ({ onAddClick }) => {
 const CorrectionModal = ({ property, onClose, onCorrection, loading }) => {
   const [text, setText] = useState('');
   const t = useT();
+  useEscapeClose(onClose);
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Edit3 className="w-5 h-5 text-orange-400" />
@@ -511,6 +522,7 @@ const UpdateNotification = ({ message, onClose }) => (
 );
 // Auth Modal Component
 const AuthModal = ({ onClose, onSuccess }) => {
+  useEscapeClose(onClose);
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -549,8 +561,8 @@ const AuthModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
-      <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-white/10">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-white/10" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold">{isLogin ? 'Welcome Back' : 'Create Account'}</h3>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
@@ -588,9 +600,12 @@ const AuthModal = ({ onClose, onSuccess }) => {
   );
 };
 // Main Component
-const RealEstateAgentContent = () => {
+const RealEstateAgentContent = ({ onBackToLanding }) => {
   const t = useT();
   const { language } = useLanguage();
+
+  // Поток анализа прерывается кнопкой «Стоп»: сервер видит закрытое соединение и останавливает генерацию
+  const streamAbortRef = useRef(null);
 
   const [properties, setProperties] = useState(() => {
     try {
@@ -927,12 +942,16 @@ const RealEstateAgentContent = () => {
     }
     setLoading(true);
     setError(null);
+    let acc = ''; // вне try, чтобы не терять уже сгенерированный текст при остановке или ошибке
 
     try {
       let token = null;
       try { token = localStorage.getItem(AUTH_STORAGE_KEYS.TOKEN); } catch {}
+      const controller = new AbortController();
+      streamAbortRef.current = controller;
       const response = await fetch('/api/analyze/stream', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({ prompt, language, webSearch: !!opts.webSearch })
       });
@@ -952,7 +971,6 @@ const RealEstateAgentContent = () => {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let acc = '';
       setAnalysis('');
       while (true) {
         const { done, value } = await reader.read();
@@ -976,11 +994,22 @@ const RealEstateAgentContent = () => {
       incrementAnalysisCount();
       setAnalysis(acc);
     } catch (err) {
-      console.error('Error:', err);
-      setError(err.message || 'Error getting analysis');
-      setAnalysis(null);
+      if (err.name === 'AbortError') {
+        // Пользователь сам остановил анализ — показываем то, что уже успело сгенерироваться
+        setAnalysis(acc.trim() ? acc : null);
+      } else {
+        console.error('Error:', err);
+        setError(err.message || 'Error getting analysis');
+        setAnalysis(acc.trim() ? acc : null);
+      }
+    } finally {
+      streamAbortRef.current = null;
     }
     setLoading(false);
+  };
+
+  const stopAnalysis = () => {
+    try { streamAbortRef.current?.abort(); } catch {}
   };
 
   const getLangInstruction = () => {
@@ -1084,6 +1113,7 @@ const RealEstateAgentContent = () => {
     const [mode, setMode] = useState('pdf'); // 'pdf' or 'text'
     const [textInput, setTextInput] = useState('');
     const [textLoading, setTextLoading] = useState(false);
+    useEscapeClose(closeModal);
 
     const handleTextSubmit = async () => {
       if (!textInput.trim()) return;
@@ -1144,8 +1174,8 @@ const RealEstateAgentContent = () => {
     };
 
     return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeModal}>
+        <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold">{t('upload.title')}</h3>
             <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
@@ -1271,6 +1301,12 @@ const RealEstateAgentContent = () => {
               ) : (
                 <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">Sign In</button>
               )}
+              {onBackToLanding && (
+                <button onClick={onBackToLanding} className="flex items-center gap-1 px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition" title={t('header.backToSite')}>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden lg:inline">{t('header.backToSite')}</span>
+                </button>
+              )}
               <LanguageSelector />
             </div>
           </div>
@@ -1321,6 +1357,12 @@ const RealEstateAgentContent = () => {
                 </div>
               ) : (
                 <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">Sign In</button>
+              )}
+              {onBackToLanding && (
+                <button onClick={onBackToLanding} className="flex items-center gap-1 px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition" title={t('header.backToSite')}>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden lg:inline">{t('header.backToSite')}</span>
+                </button>
               )}
               <LanguageSelector />
               <button onClick={() => setShowUploadModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg transition">
@@ -1505,7 +1547,14 @@ const RealEstateAgentContent = () => {
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10 min-h-[300px]">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">{t('analysis.results')}</h2>
-                {loading && <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /><span>{t('analysis.analyzing')}</span></div>}
+                {loading && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-400"><Loader2 className="w-4 h-4 animate-spin" /><span>{t('analysis.analyzing')}</span></div>
+                    <button onClick={stopAnalysis} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                      <Square className="w-3 h-3" />{t('analysis.stop')}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {error && <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg mb-4"><p className="text-red-400">❌ {error}</p></div>}
@@ -1527,7 +1576,7 @@ const RealEstateAgentContent = () => {
 };
 
 // Main Component with Language Provider
-const RealEstateAgent = () => {
+const RealEstateAgent = ({ onBackToLanding }) => {
   const [language, setLanguage] = useState(() => {
     try {
       return localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en';
@@ -1548,7 +1597,7 @@ const RealEstateAgent = () => {
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage }}>
-      <RealEstateAgentContent />
+      <RealEstateAgentContent onBackToLanding={onBackToLanding} />
     </LanguageContext.Provider>
   );
 };

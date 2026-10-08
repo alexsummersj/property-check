@@ -3,6 +3,7 @@
     "title": "AI Real Estate Agent",
     "subtitle": "Global Real Estate Investment Analysis",
     "addButton": "Add",
+    "backToSite": "Back to site",
     "objectsCount": "property(s)"
   },
   "empty": {
@@ -67,6 +68,7 @@
     "placeholder": "Example: Should I sell in 2 years?",
     "results": "Results",
     "analyzing": "Analyzing...",
+    "stop": "Stop",
     "selectAnalysis": "Select analysis type"
   },
   "stats": {

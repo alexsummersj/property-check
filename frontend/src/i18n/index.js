@@ -32,9 +32,9 @@ export const languages = [
 
 export const getTranslation = (lang, path) => {
   const keys = path.split('.');
-  let result = translations[lang] || translations['en'];
-  for (const key of keys) {
-    result = result?.[key];
-  }
+  const dig = (obj) => keys.reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  let result = dig(translations[lang] || translations['en']);
+  // недостающий перевод берём из английского, а не показываем путь вроде "header.backToSite"
+  if (result == null) result = dig(translations['en']);
   return result || path;
 };

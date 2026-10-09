@@ -4,7 +4,8 @@ const Anthropic = require('@anthropic-ai/sdk');
 require('dotenv').config();
 const path = require('path');
 const app = express();
-const PORT = 3001;
+// PORT нужен не только для прода: drill-скрипт поднимает копию прод-данных на другом порту
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware - ВАЖНО: увеличенный лимит для PDF файлов
 app.use(cors());

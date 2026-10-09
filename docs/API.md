@@ -22,6 +22,22 @@ Users are stored in `users.json` (passwords hashed with bcrypt).
 Request: `{ "email": "...", "password": "..." }` → same response as `/register`.
 `401` on wrong credentials.
 
+## GET `/me`
+Header: `Authorization: Bearer <token>` → `{ "user": { "id", "email", "name", "plan", "analysisCount" } }`, `401` if the token is unknown, expired or issued before a password change.
+
+## POST `/forgot-password`
+Request: `{ "email": "..." }` → always `200 { "success": true }`, so the answer cannot be used to check whether an email is registered.
+There is no email provider on the beta yet, so the response also carries the link: `{ "success": true, "resetToken": "<64 hex>", "resetExpiresAt": "<ISO>" }`.
+Set `RESET_TOKEN_IN_RESPONSE=0` in `.env` to hide it once emails are wired up.
+Rate limit: 20 requests / 15 min per IP (counter is shared with `/reset-password`).
+
+## POST `/reset-password`
+Request: `{ "token": "<resetToken>", "password": "<6+ chars>" }` → `{ "success": true }`.
+`400` if the token is unknown, older than 1 hour, already used, or the password is too short.
+`users.json` stores only the SHA-256 of the token. Changing the password invalidates every JWT issued before it
+(the `pwdAt` claim must equal `passwordChangedAt`), so other devices have to sign in again.
+Frontend link format: `https://property-check.com/#reset/<resetToken>` — it opens the sign-in modal on the "new password" step.
+
 ## POST `/analyze`
 Free-form AI analysis (investment questions, comparisons, market info).
 Request: `{ "prompt": "Is Palm Jumeirah a good investment?", "webSearch": true }`

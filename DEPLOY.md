@@ -12,7 +12,7 @@
 | Domains | `property-check.com`, `www.property-check.com` (DNS A/CNAME → `167.71.49.80`) |
 | TLS | Let's Encrypt via certbot, HTTP→HTTPS redirect |
 | Secrets | `/var/www/property-check/.env` (`ANTHROPIC_API_KEY`, `JWT_SECRET`) |
-| Data | `/var/www/property-check/users.json`, `quotas.json`, `properties.json` — backed up daily |
+| Data | `/var/www/property-check/users.json`, `quotas.json`, `properties.json`, `analyzes.json` — backed up daily |
 
 > Note: production was migrated from the old DigitalOcean droplet `174.138.28.202`
 > (Oct 2026). Access to the old droplet is lost and it is considered abandoned —
@@ -112,3 +112,30 @@ ssh root@SERVER "tr -d '\r' < /usr/local/bin/pc-backup.sh > /tmp/pb && mv /tmp/p
 ```
 
 Rollback: `git reset --hard b02a36c` (before saved analyses) + rebuild + restart. `analyzes.json` is additive — old builds simply ignore it.
+
+## Deploy v3.3 note (password reset)
+
+No new npm deps and no new data files. New endpoints `POST /api/forgot-password` and `POST /api/reset-password`
+(one-hour single-use token, stored as SHA-256 on the user record).
+
+* `users.json` gains optional fields: `resetToken` (hash), `resetExpires`, `passwordChangedAt`.
+* JWTs gain a `pwdAt` claim; after a password change every previously issued token stops working, so the user
+  signs in again on other devices.
+* `RESET_TOKEN_IN_RESPONSE=0` in `.env` stops returning the link in the `/forgot-password` response — switch it on
+  when an email provider replaces the in-app link.
+* Rate limit: 20 reset requests / 15 min per IP, shared by both endpoints.
+
+```bash
+cd /var/www/property-check
+git pull --ff-only
+cd frontend && npm run build && cd ..
+pm2 restart property-check --update-env
+curl -s localhost:3001/api/health
+```
+
+Smoke test (`pc-reset-test.mjs`, kept next to the repo locally and copied to `/tmp/pr2.mjs` on the server):
+registers a throwaway account, resets the password through the token and asserts that the old password and the
+old session stop working, that the token is single-use and that `users.json` keeps no raw token. Run: `node /tmp/pr2.mjs`.
+
+Rollback: `git reset --hard 6c510c2` (before password reset) + rebuild + restart. Old builds ignore the new user
+fields; anyone who reset their password after this deploy simply signs in again.

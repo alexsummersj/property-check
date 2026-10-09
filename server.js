@@ -725,7 +725,8 @@ app.post('/api/assess-risk', aiLimiter, async (req, res) => {
     const currency = getCurrency(property.location);
 
     const message = await anthropic.messages.create({
-      model: MODELS.MAIN,
+      // Левая панель ждёт только JSON с оценками — Sonnet справляется и в разы быстрее Opus
+      model: MODELS.FAST,
       max_tokens: 2000,
       messages: [{
         role: 'user',

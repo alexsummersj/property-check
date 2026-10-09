@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
 import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square } from 'lucide-react';
 import { translations, languages, getTranslation } from './i18n';
+import MarkdownLite from './MarkdownLite';
 
 // Auth constants
 const FREE_ANALYSIS_LIMIT = 3;
@@ -599,6 +600,140 @@ const AuthModal = ({ onClose, onSuccess }) => {
     </div>
   );
 };
+// Модалка добавления объекта. Раньше была объявлена внутри RealEstateAgentContent,
+// поэтому пересоздавалась на каждый рендер родителя: React видел новый тип компонента,
+// размонтировал поддерево и сбрасывал ввод в вкладке Text, когда в этот момент
+// приходил ответ синхронизации объектов. Теперь всё состояние живёт здесь.
+const UploadModal = ({
+  onClose,
+  fileInputRef, pendingFiles, uploadLoading, dragOver, uploadError, uploadSuccess, setUploadError,
+  onDragOver, onDragLeave, onDrop, onFileSelect, onRemoveFile, onUploadAll,
+  onAddFromText
+}) => {
+  const t = useT();
+  const [mode, setMode] = useState('pdf'); // 'pdf' or 'text'
+  const [textInput, setTextInput] = useState('');
+  const [textLoading, setTextLoading] = useState(false);
+  useEscapeClose(onClose);
+
+  const handleTextSubmit = async () => {
+    if (!textInput.trim()) return;
+
+    setTextLoading(true);
+    setUploadError(null);
+
+    try {
+      const added = await onAddFromText(textInput);
+      if (added) setTextInput('');
+    } catch (err) {
+      console.error('Text parse error:', err);
+      setUploadError(err.message || 'Error parsing text');
+    } finally {
+      setTextLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold">{t('upload.title')}</h3>
+          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
+        </div>
+
+        {/* Mode Tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setMode('pdf')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+              mode === 'pdf' ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20'
+            }`}
+          >
+            <FileUp className="w-4 h-4" />
+            PDF
+          </button>
+          <button
+            onClick={() => setMode('text')}
+            className={`flex-1 py-2 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+              mode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20'
+            }`}
+          >
+            <Edit3 className="w-4 h-4" />
+            Text
+          </button>
+        </div>
+        {mode === 'pdf' ? (
+          <>
+            <p className="text-gray-400 text-sm mb-4">{t('upload.description')}</p>
+            <div
+              onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragOver ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 hover:border-white/40'}`}
+            >
+              <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={onFileSelect} className="hidden" />
+              <FileUp className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-300">{t('upload.dropzone')}</p>
+              <p className="text-xs text-gray-500">{t('upload.or')}</p>
+            </div>
+            {pendingFiles.length > 0 && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-400 mb-2">{t('upload.files')} ({pendingFiles.length}):</p>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {pendingFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <File className="w-4 h-4 text-blue-400" />
+                        <span className="text-sm truncate">{file.name}</span>
+                      </div>
+                      <button onClick={() => onRemoveFile(index)} className="p-1 hover:bg-red-500/20 rounded"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={onUploadAll} disabled={uploadLoading} className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2">
+                  {uploadLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('upload.analyzing')}</span></> : <><Upload className="w-5 h-5" /><span>{t('upload.upload')}</span></>}
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="text-gray-400 text-sm mb-4">Describe the property in any format. AI will extract the details.</p>
+            <textarea
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="Example: 2BR apartment in Waves Grande, Dubai Marina. 850 sqft, price 2.25M AED, Sobha developer, ready Q2 2025, sea view, 15th floor..."
+              className="w-full h-32 px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 resize-none mb-4"
+              disabled={textLoading}
+            />
+            <div className="bg-white/5 rounded-lg p-3 mb-4">
+              <p className="text-xs text-gray-400 mb-2">💡 Include any of these:</p>
+              <div className="flex flex-wrap gap-2">
+                {['Name/Project', 'Location', 'Price', 'Size (sqft)', 'Bedrooms', 'Developer', 'Completion', 'View', 'Floor'].map(tag => (
+                  <span key={tag} className="text-xs bg-white/10 px-2 py-1 rounded">{tag}</span>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={handleTextSubmit}
+              disabled={textLoading || !textInput.trim()}
+              className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {textLoading ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /><span>Analyzing...</span></>
+              ) : (
+                <><CheckCircle className="w-5 h-5" /><span>Add Property</span></>
+              )}
+            </button>
+          </>
+        )}
+
+        {uploadError && <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">❌ {uploadError}</p></div>}
+        {uploadSuccess && <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{uploadSuccess}</p></div>}
+      </div>
+    </div>
+  );
+};
+
 // Main Component
 const RealEstateAgentContent = ({ onBackToLanding }) => {
   const t = useT();
@@ -912,6 +1047,54 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     }
   };
 
+  // Добавление объекта из обычного текста (вкладка Text в модалке). Держим здесь,
+  // потому что это состояние портфеля, а модалка теперь только про ввод.
+  const addPropertyFromText = async (text) => {
+    const response = await fetch('/api/parse-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.success || !data.property) return false;
+
+    const newProperty = {
+      id: Date.now(),
+      name: data.property.name || 'New Property',
+      location: data.property.location || 'Not specified',
+      type: data.property.type || 'Not specified',
+      price: data.property.price || 0,
+      size: data.property.size || 0,
+      sizeUnits: data.property.sizeUnits || null,
+      completion: data.property.completion || 'Not specified',
+      developer: data.property.developer || 'Not specified',
+      bedrooms: data.property.bedrooms,
+      bathrooms: data.property.bathrooms,
+      paymentPlan: data.property.paymentPlan,
+      view: data.property.view,
+      floor: data.property.floor,
+      amenities: data.property.amenities,
+      additionalInfo: data.property.additionalInfo,
+      addedAt: new Date().toISOString(),
+      corrections: []
+    };
+
+    setProperties(prev => [...prev, newProperty]);
+    setSelectedProperty(newProperty);
+    setUploadSuccess(`✅ "${newProperty.name}" added!`);
+
+    setTimeout(() => assessRisk(newProperty), 500);
+
+    setTimeout(() => {
+      setShowUploadModal(false);
+      setUploadSuccess(null);
+    }, 2000);
+
+    return true;
+  };
+
   const handleDragOver = (e) => { e.preventDefault(); setDragOver(true); };
   const handleDragLeave = (e) => { e.preventDefault(); setDragOver(false); };
   const handleDrop = (e) => { e.preventDefault(); setDragOver(false); handleFilesSelected(e.dataTransfer.files); };
@@ -933,6 +1116,16 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     setUploadError(null);
     setUploadSuccess(null);
     setPendingFiles([]);
+  };
+
+  // UploadModal объявлена на уровне модуля, поэтому всё портфельное состояние
+  // приходится прокидывать ей явно
+  const uploadModalProps = {
+    onClose: closeModal,
+    fileInputRef, pendingFiles, uploadLoading, dragOver, uploadError, uploadSuccess, setUploadError,
+    onDragOver: handleDragOver, onDragLeave: handleDragLeave, onDrop: handleDrop,
+    onFileSelect: handleFileSelect, onRemoveFile: removeFile, onUploadAll: handleUploadAll,
+    onAddFromText: addPropertyFromText
   };
 
   const analyzeWithClaude = async (prompt, opts = {}) => {
@@ -1108,178 +1301,11 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
       : (currentProperty.price / currentProperty.size).toFixed(0)  // цена за sqft
   ) : 0;
 
-  // Upload Modal Component
-  const UploadModal = () => {
-    const [mode, setMode] = useState('pdf'); // 'pdf' or 'text'
-    const [textInput, setTextInput] = useState('');
-    const [textLoading, setTextLoading] = useState(false);
-    useEscapeClose(closeModal);
-
-    const handleTextSubmit = async () => {
-      if (!textInput.trim()) return;
-      
-      setTextLoading(true);
-      setUploadError(null);
-      
-      try {
-        const response = await fetch('/api/parse-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: textInput })
-        });
-        
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        
-        if (data.success && data.property) {
-          const newProperty = {
-            id: Date.now(),
-            name: data.property.name || 'New Property',
-            location: data.property.location || 'Not specified',
-            type: data.property.type || 'Not specified',
-            price: data.property.price || 0,
-            size: data.property.size || 0,
-            sizeUnits: data.property.sizeUnits || null,
-            completion: data.property.completion || 'Not specified',
-            developer: data.property.developer || 'Not specified',
-            bedrooms: data.property.bedrooms,
-            bathrooms: data.property.bathrooms,
-            paymentPlan: data.property.paymentPlan,
-            view: data.property.view,
-            floor: data.property.floor,
-            amenities: data.property.amenities,
-            additionalInfo: data.property.additionalInfo,
-            addedAt: new Date().toISOString(),
-            corrections: []
-          };
-          
-          setProperties(prev => [...prev, newProperty]);
-          setSelectedProperty(newProperty);
-          setUploadSuccess(`✅ "${newProperty.name}" added!`);
-          setTextInput('');
-          
-          setTimeout(() => assessRisk(newProperty), 500);
-          
-          setTimeout(() => {
-            setShowUploadModal(false);
-            setUploadSuccess(null);
-          }, 2000);
-        }
-      } catch (err) {
-        console.error('Text parse error:', err);
-        setUploadError(err.message || 'Error parsing text');
-      } finally {
-        setTextLoading(false);
-      }
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={closeModal}>
-        <div className="bg-slate-800 rounded-2xl p-6 max-w-lg w-full border border-white/10 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold">{t('upload.title')}</h3>
-            <button onClick={closeModal} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
-          </div>
-          
-          {/* Mode Tabs */}
-          <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setMode('pdf')}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-                mode === 'pdf' ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20'
-              }`}
-            >
-              <FileUp className="w-4 h-4" />
-              PDF
-            </button>
-            <button
-              onClick={() => setMode('text')}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-                mode === 'text' ? 'bg-blue-500 text-white' : 'bg-white/10 hover:bg-white/20'
-              }`}
-            >
-              <Edit3 className="w-4 h-4" />
-              Text
-            </button>
-          </div>
-
-          {mode === 'pdf' ? (
-            <>
-              <p className="text-gray-400 text-sm mb-4">{t('upload.description')}</p>
-              <div
-                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragOver ? 'border-blue-500 bg-blue-500/10' : 'border-white/20 hover:border-white/40'}`}
-              >
-                <input ref={fileInputRef} type="file" accept=".pdf" multiple onChange={handleFileSelect} className="hidden" />
-                <FileUp className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-300">{t('upload.dropzone')}</p>
-                <p className="text-xs text-gray-500">{t('upload.or')}</p>
-              </div>
-              {pendingFiles.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm text-gray-400 mb-2">{t('upload.files')} ({pendingFiles.length}):</p>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {pendingFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-white/5 rounded-lg">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <File className="w-4 h-4 text-blue-400" />
-                          <span className="text-sm truncate">{file.name}</span>
-                        </div>
-                        <button onClick={() => removeFile(index)} className="p-1 hover:bg-red-500/20 rounded"><Trash2 className="w-4 h-4 text-red-400" /></button>
-                      </div>
-                    ))}
-                  </div>
-                  <button onClick={handleUploadAll} disabled={uploadLoading} className="w-full mt-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2">
-                    {uploadLoading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('upload.analyzing')}</span></> : <><Upload className="w-5 h-5" /><span>{t('upload.upload')}</span></>}
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="text-gray-400 text-sm mb-4">Describe the property in any format. AI will extract the details.</p>
-              <textarea
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                placeholder="Example: 2BR apartment in Waves Grande, Dubai Marina. 850 sqft, price 2.25M AED, Sobha developer, ready Q2 2025, sea view, 15th floor..."
-                className="w-full h-32 px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500 resize-none mb-4"
-                disabled={textLoading}
-              />
-              <div className="bg-white/5 rounded-lg p-3 mb-4">
-                <p className="text-xs text-gray-400 mb-2">💡 Include any of these:</p>
-                <div className="flex flex-wrap gap-2">
-                  {['Name/Project', 'Location', 'Price', 'Size (sqft)', 'Bedrooms', 'Developer', 'Completion', 'View', 'Floor'].map(tag => (
-                    <span key={tag} className="text-xs bg-white/10 px-2 py-1 rounded">{tag}</span>
-                  ))}
-                </div>
-              </div>
-              <button 
-                onClick={handleTextSubmit} 
-                disabled={textLoading || !textInput.trim()}
-                className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {textLoading ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /><span>Analyzing...</span></>
-                ) : (
-                  <><CheckCircle className="w-5 h-5" /><span>Add Property</span></>
-                )}
-              </button>
-            </>
-          )}
-          
-          {uploadError && <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-red-400 text-sm">❌ {uploadError}</p></div>}
-          {uploadSuccess && <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"><p className="text-green-400 text-sm">{uploadSuccess}</p></div>}
-        </div>
-      </div>
-    );
-  };
-
   // Empty state
   if (properties.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-        {showUploadModal && <UploadModal />}
+        {showUploadModal && <UploadModal {...uploadModalProps} />}
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
         <div className="bg-black/30 backdrop-blur-md border-b border-white/10 relative z-50">
           <div className="max-w-7xl mx-auto px-6 py-4">
@@ -1320,7 +1346,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      {showUploadModal && <UploadModal />}
+      {showUploadModal && <UploadModal {...uploadModalProps} />}
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
       {showCorrectionModal && currentProperty && (
@@ -1566,7 +1592,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                 </div>
               )}
 
-              {analysis && <div className="whitespace-pre-wrap text-gray-200 leading-relaxed">{analysis}</div>}
+              {analysis && <MarkdownLite text={analysis} />}
             </div>
           </div>
         </div>

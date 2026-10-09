@@ -538,14 +538,35 @@ const UpdateNotification = ({ message, onClose }) => (
   </div>
 );
 // Auth Modal Component
-const AuthModal = ({ onClose, onSuccess }) => {
+// Ссылка для сброса пароля приходит как /#reset/<token> — открываем модалку сразу на шаге нового пароля
+const getResetTokenFromUrl = () => {
+  try {
+    const m = /^#reset\/([A-Za-z0-9_-]{20,128})$/.exec(window.location.hash || '');
+    return m ? m[1] : null;
+  } catch { return null; }
+};
+
+// Шаги: login | register | forgot (ввели email) | reset (вводим новый пароль) | sent (ссылка отправлена)
+const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
   useEscapeClose(onClose);
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState(initialResetToken ? 'reset' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [password2, setPassword2] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
+  const [resetToken, setResetToken] = useState(initialResetToken || '');
+  const [copied, setCopied] = useState(false);
+
+  const switchMode = (next) => { setMode(next); setError(''); setInfo(''); setCopied(false); };
+
+  const finishLogin = (data) => {
+    localStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, data.token);
+    localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(data.user));
+    onSuccess(data.user);
+  };
 
   const handleSubmit = async () => {
     if (!email || !password) {
@@ -555,8 +576,8 @@ const AuthModal = ({ onClose, onSuccess }) => {
     setLoading(true);
     setError('');
     try {
-      const endpoint = isLogin ? '/api/login' : '/api/register';
-      const body = isLogin ? { email, password } : { email, password, name };
+      const endpoint = mode === 'login' ? '/api/login' : '/api/register';
+      const body = mode === 'login' ? { email, password } : { email, password, name };
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -566,9 +587,7 @@ const AuthModal = ({ onClose, onSuccess }) => {
       if (data.error) {
         setError(data.error);
       } else if (data.success) {
-        localStorage.setItem(AUTH_STORAGE_KEYS.TOKEN, data.token);
-        localStorage.setItem(AUTH_STORAGE_KEYS.USER, JSON.stringify(data.user));
-        onSuccess(data.user);
+        finishLogin(data);
       }
     } catch (err) {
       setError('Connection error. Please try again.');
@@ -577,40 +596,156 @@ const AuthModal = ({ onClose, onSuccess }) => {
     }
   };
 
+  const submitForgot = async () => {
+    if (!email) { setError('Please enter your email'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const r = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) { setError(d.error || 'Something went wrong'); return; }
+      if (d.resetToken) {
+        // Почтовый провайдер ещё не подключён — показываем ссылку прямо здесь
+        setResetToken(d.resetToken);
+        setMode('reset');
+      } else {
+        setMode('sent');
+        setInfo('If this email is registered, a reset link is on its way. The link is valid for 1 hour.');
+      }
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitReset = async () => {
+    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password !== password2) { setError('Passwords do not match'); return; }
+    setLoading(true);
+    setError('');
+    try {
+      const r = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: resetToken, password })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || d.error) { setError(d.error || 'Could not reset the password'); return; }
+
+      // Пользователь уже ввёл новый пароль дважды — сразу входим им
+      if (email) {
+        const lr = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const ld = await lr.json().catch(() => ({}));
+        if (lr.ok && ld.token) { finishLogin(ld); return; }
+      }
+      switchMode('login');
+      setInfo('Password updated — please sign in.');
+    } catch (err) {
+      setError('Connection error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetLink = resetToken ? `${window.location.origin}/#reset/${resetToken}` : '';
+  const copyResetLink = async () => {
+    try {
+      await navigator.clipboard.writeText(resetLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  const titles = { login: 'Welcome Back', register: 'Create Account', forgot: 'Reset password', reset: 'New password', sent: 'Check your email' };
+  const cta = { login: 'Sign In', register: 'Create Account', forgot: 'Send reset link', reset: 'Save password', sent: 'Back to sign in' };
+  const primaryAction = (mode === 'login' || mode === 'register') ? handleSubmit
+    : mode === 'forgot' ? submitForgot
+    : mode === 'reset' ? submitReset
+    : () => switchMode('login');
+
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-white/10" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold">{isLogin ? 'Welcome Back' : 'Create Account'}</h3>
+          <h3 className="text-xl font-bold">{titles[mode] || titles.login}</h3>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
         </div>
-        <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-          <p className="text-sm text-blue-300">🎉 Sign up for unlimited free analyses during our beta!</p>
-        </div>
+        {(mode === 'login' || mode === 'register') && (
+          <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+            <p className="text-sm text-blue-300">🎉 Sign up for unlimited free analyses during our beta!</p>
+          </div>
+        )}
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-sm text-red-400">{error}</p></div>}
+        {info && <div className="mb-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"><p className="text-sm text-green-300">{info}</p></div>}
         <div className="space-y-4">
-          {!isLogin && (
+          {mode === 'register' && (
             <div>
               <label className="block text-sm text-gray-400 mb-1">Name</label>
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           )}
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onKeyPress={(e) => e.key === 'Enter' && handleSubmit()} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          <button onClick={handleSubmit} disabled={loading} className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2">
-            {loading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>Please wait...</span></> : <span>{isLogin ? 'Sign In' : 'Create Account'}</span>}
+          {mode !== 'reset' && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Email</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          )}
+          {mode === 'reset' && resetLink && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Reset link (valid 1 hour)</label>
+              <div className="flex gap-2">
+                <input readOnly value={resetLink} onFocus={(e) => e.target.select()} className="w-full px-3 py-3 text-xs bg-white/10 border border-white/20 rounded-lg font-mono" />
+                <button onClick={copyResetLink} className="px-3 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">{copied ? 'Copied' : 'Copy'}</button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">We do not send email yet — this link is your reset code. Open it on another device if needed.</p>
+            </div>
+          )}
+          {mode === 'sent' && (
+            <p className="text-sm text-gray-400">The link expires in 1 hour. If nothing arrives, write to hello@property-check.com.</p>
+          )}
+          {(mode === 'login' || mode === 'register') && (
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onKeyPress={(e) => e.key === 'Enter' && handleSubmit()} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          )}
+          {mode === 'reset' && (
+            <>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">New password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="at least 6 characters" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Repeat password</label>
+                <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" onKeyPress={(e) => e.key === 'Enter' && submitReset()} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+            </>
+          )}
+          <button onClick={primaryAction} disabled={loading} className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2">
+            {loading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>Please wait...</span></> : <span>{cta[mode] || cta.login}</span>}
           </button>
         </div>
-        <div className="mt-4 text-center">
-          <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-sm text-gray-400 hover:text-white transition">
-            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-          </button>
+        <div className="mt-4 text-center space-y-2">
+          {mode === 'login' && (
+            <div><button onClick={() => switchMode('forgot')} className="text-sm text-gray-400 hover:text-white transition">Forgot password?</button></div>
+          )}
+          <div>
+            <button onClick={() => switchMode(mode === 'register' ? 'login' : 'register')} className="text-sm text-gray-400 hover:text-white transition">
+              {mode === 'register' ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </button>
+          </div>
+          {(mode === 'forgot' || mode === 'reset' || mode === 'sent') && (
+            <div><button onClick={() => switchMode('login')} className="text-sm text-gray-400 hover:text-white transition">Back to sign in</button></div>
+          )}
         </div>
       </div>
     </div>
@@ -801,7 +936,9 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
       return saved ? JSON.parse(saved) : null;
     } catch { return null; }
   });
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  // Ссылка /#reset/<token> открывает модалку авторизации сразу на шаге нового пароля
+  const [authResetToken, setAuthResetToken] = useState(() => getResetTokenFromUrl());
+  const [showAuthModal, setShowAuthModal] = useState(() => !!getResetTokenFromUrl());
   const [analysisCount, setAnalysisCount] = useState(() => {
     try {
       return parseInt(localStorage.getItem(AUTH_STORAGE_KEYS.ANALYSIS_COUNT) || '0');
@@ -828,9 +965,17 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     }
   };
 
+  // Хеш #reset/<token> убираем, чтобы перезагрузка страницы не открывала модалку сброса заново
+  const clearResetHash = () => { if (getResetTokenFromUrl()) window.location.hash = '#app'; };
+  const closeAuthModal = () => {
+    setShowAuthModal(false);
+    setAuthResetToken(null);
+    clearResetHash();
+  };
+
   const handleAuthSuccess = (userData) => {
     setUser(userData);
-    setShowAuthModal(false);
+    closeAuthModal();
   };
 
   const handleLogout = () => {
@@ -1492,7 +1637,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
         {showUploadModal && <UploadModal {...uploadModalProps} />}
-        {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
+        {showAuthModal && <AuthModal onClose={closeAuthModal} onSuccess={handleAuthSuccess} initialResetToken={authResetToken} />}
         <div className="bg-black/30 backdrop-blur-md border-b border-white/10 relative z-50">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
@@ -1534,7 +1679,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
       {showUploadModal && <UploadModal {...uploadModalProps} />}
 
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />}
+      {showAuthModal && <AuthModal onClose={closeAuthModal} onSuccess={handleAuthSuccess} initialResetToken={authResetToken} />}
       {showCorrectionModal && currentProperty && (
         <CorrectionModal
           property={currentProperty}

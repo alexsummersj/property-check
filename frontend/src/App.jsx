@@ -9,6 +9,8 @@ const readView = () => {
   const hash = window.location.hash;
   if (hash === '#app') return 'app';
   if (hash === '#landing') return 'landing';
+  // Ссылка сброса пароля (#reset/<token>) — тоже приложение: модалка сама подхватит токен
+  if (hash.startsWith('#reset/')) return 'app';
   try {
     return localStorage.getItem('property_check_token') ? 'app' : 'landing';
   } catch { return 'landing'; }

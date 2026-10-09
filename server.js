@@ -118,7 +118,12 @@ const getUserFromReq = (req) => {
   if (!h.startsWith('Bearer ')) return null;
   try {
     const decoded = jwt.verify(h.split(' ')[1], JWT_SECRET);
-    return loadUsers().find(u => u.id === decoded.id) || null;
+    const user = loadUsers().find(u => u.id === decoded.id) || null;
+    if (!user) return null;
+    // После смены пароля старые токены больше не действуют (у JWT нет отзыва,
+    // поэтому сравниваем iat с моментом смены; запас 2с — iat округлён до секунды)
+    if (user.passwordChangedAt && decoded.iat && decoded.iat * 1000 < user.passwordChangedAt - 2000) return null;
+    return user;
   } catch (e) {
     return null;
   }
@@ -268,26 +273,83 @@ app.post('/api/login', async (req, res) => {
 
 // Проверка токена
 app.get('/api/me', (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No token' });
-  }
-  
+  const user = getUserFromReq(req);
+  if (!user) return res.status(401).json({ error: 'Invalid token' });
+  res.json({
+    user: { id: user.id, email: user.email, name: user.name, plan: user.plan, analysisCount: user.analysisCount }
+  });
+});
+
+// ===== Сброс пароля =====
+// В users.json кладём не сам токен, а его sha256 — утечка файла не даёт право сброса.
+// Почтового провайдера на бете нет, поэтому ссылка отдаётся в ответе и показывается
+// пользователю (RESET_TOKEN_IN_RESPONSE=0 выключит это, когда включим отправку писем).
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 час
+const hashResetToken = (t) => crypto.createHash('sha256').update(String(t)).digest('hex');
+const safeEqual = (a, b) => {
+  const ba = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  return ba.length === bb.length && crypto.timingSafeEqual(ba, bb);
+};
+const forgotLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many password reset attempts, please try later' }
+});
+
+app.post('/api/forgot-password', forgotLimiter, (req, res) => {
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const normalizedEmail = String((req.body || {}).email || '').trim().toLowerCase();
     const users = loadUsers();
-    const user = users.find(u => u.id === decoded.id);
-    
-    if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+    const user = users.find(u => u.email === normalizedEmail);
+
+    // Ответ всегда 200: по нему нельзя проверить, зарегистрирован ли email
+    if (!user) return res.json({ success: true });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.resetToken = hashResetToken(token);
+    user.resetExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
+    saveUsers(users);
+
+    const payload = { success: true };
+    if (process.env.RESET_TOKEN_IN_RESPONSE !== '0') {
+      payload.resetToken = token;
+      payload.resetExpiresAt = user.resetExpires;
     }
-    
-    res.json({ 
-      user: { id: user.id, email: user.email, name: user.name, plan: user.plan, analysisCount: user.analysisCount }
-    });
+    return res.json(payload);
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Failed to start password reset' });
+  }
+});
+
+app.post('/api/reset-password', forgotLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body || {};
+    const pwd = String(password || '');
+    if (!token) return res.status(400).json({ error: 'Reset link is required' });
+    if (pwd.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    const users = loadUsers();
+    const tokenHash = hashResetToken(token);
+    const user = users.find(u => u.resetToken && safeEqual(u.resetToken, tokenHash));
+
+    if (!user || !user.resetExpires || new Date(user.resetExpires).getTime() < Date.now()) {
+      return res.status(400).json({ error: 'Reset link is invalid or expired — please request a new one' });
+    }
+
+    user.password = await bcrypt.hash(pwd, 10);
+    delete user.resetToken;
+    delete user.resetExpires;
+    user.passwordChangedAt = Date.now(); // старые JWT считаются протухшими
+    saveUsers(users);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 });
 

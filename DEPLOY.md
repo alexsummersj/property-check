@@ -133,9 +133,9 @@ pm2 restart property-check --update-env
 curl -s localhost:3001/api/health
 ```
 
-Smoke test (`pc-reset-test.mjs`, kept next to the repo locally and copied to `/tmp/pr2.mjs` on the server):
-registers a throwaway account, resets the password through the token and asserts that the old password and the
-old session stop working, that the token is single-use and that `users.json` keeps no raw token. Run: `node /tmp/pr2.mjs`.
+Smoke test: `SMOKE_DATA_DIR=/var/www/property-check node tests/smoke.mjs` (see the «Tests & backup drill» section
+below) — it registers a throwaway account, resets the password through the token and asserts that the old password
+and the old session stop working, that the token is single-use and that `users.json` keeps no raw token.
 
 Rollback: `git reset --hard 6c510c2` (before password reset) + rebuild + restart. Old builds ignore the new user
 fields; anyone who reset their password after this deploy simply signs in again.

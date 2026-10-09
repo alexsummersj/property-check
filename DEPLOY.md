@@ -139,3 +139,37 @@ old session stop working, that the token is single-use and that `users.json` kee
 
 Rollback: `git reset --hard 6c510c2` (before password reset) + rebuild + restart. Old builds ignore the new user
 fields; anyone who reset their password after this deploy simply signs in again.
+
+## Tests & backup drill (v3.4)
+
+**Smoke suite** — `tests/smoke.mjs` (npm script `test:smoke`), ~35 checks over health, auth, quota, properties,
+saved analyses and password reset. It never calls Claude unless `SMOKE_AI=1`, and it only touches a throwaway
+account plus its own ids, so it is safe against production:
+
+```bash
+SMOKE_DATA_DIR=/var/www/property-check node tests/smoke.mjs   # на сервере: тест удалит свой тестовый аккаунт
+SMOKE_BASE_URL=https://property-check.com node tests/smoke.mjs # извне: без чистки users.json
+SMOKE_AI=1 node tests/smoke.mjs                                # дополнительно один платный вызов Claude
+```
+Output ends with `N passed, N failed, N skipped` and `SMOKE_OK` / `SMOKE_FAILED` (exit code 1 on any FAIL).
+
+CI (`.github/workflows/ci.yml`) installs backend and frontend, then starts `node server.js` with a dummy
+`ANTHROPIC_API_KEY` on `PORT=3101` and runs the suite against it — AI checks are skipped there by design.
+
+The suite waits and retries on `429`: `/api` is limited to 60 requests/min per IP and the suite is close to that
+budget, so back-to-back runs from the same IP (127.0.0.1 on the server) would otherwise fail. The reset endpoints
+have their own 15-min limiter — those checks turn into `SKIP` instead of `FAIL`.
+
+**Backup restore drill** — `pc-drill.sh` (installed as `/usr/local/bin/pc-drill.sh`). A backup nobody has restored
+is a hope, not a plan, so the script takes the newest `/root/backups/pc-data-*.tar.gz`, unpacks it into `/tmp`,
+checks every JSON parses, boots the current `/var/www/property-check/server.js` against the restored data on
+**port 3999** (production on 3001 stays untouched) and runs the smoke suite against that instance. Ends with
+`DRILL_OK`; the temp directory and the temporary server are removed on exit.
+
+```bash
+scp pc-drill.sh root@SERVER:/usr/local/bin/pc-drill.sh
+ssh root@SERVER "tr -d '\r' < /usr/local/bin/pc-drill.sh > /tmp/pd && mv /tmp/pd /usr/local/bin/pc-drill.sh && chmod +x /usr/local/bin/pc-drill.sh"
+ssh root@SERVER /usr/local/bin/pc-drill.sh
+```
+Suggested cron (once a week, Sunday 04:40 UTC): `40 4 * * 0 root /usr/local/bin/pc-drill.sh > /var/log/pc-drill.log 2>&1`.
+`PORT` became an environment variable (`process.env.PORT || 3001`) exactly so this drill can run next to production.

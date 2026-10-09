@@ -69,6 +69,10 @@
     "results": "Результаты",
     "analyzing": "Анализ...",
     "stop": "Стоп",
+    "savedOn": "Сохранено",
+    "copy": "Копировать",
+    "copied": "Скопировано",
+    "download": "Markdown",
     "selectAnalysis": "Выберите тип анализа"
   },
   "stats": {

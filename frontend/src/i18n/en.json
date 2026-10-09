@@ -69,6 +69,10 @@
     "results": "Results",
     "analyzing": "Analyzing...",
     "stop": "Stop",
+    "savedOn": "Saved",
+    "copy": "Copy",
+    "copied": "Copied",
+    "download": "Markdown",
     "selectAnalysis": "Select analysis type"
   },
   "stats": {

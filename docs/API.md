@@ -129,3 +129,22 @@ Response:
 - `max_uses` is configurable via `WEB_SEARCH_MAX_USES` (default 5, was hardcoded 3 and News-only); `max_tokens` with search raised to 6000 on both endpoints.
 - Left-side panels (property card from PDF, Risk Score, corrections) are still non-streamed — they return structured JSON, not prose.
 - Cost note: web search is billed by Anthropic separately (~$10 / 1000 searches) and adds a few seconds before the first streamed token; quota accounting is unchanged (quota is consumed only when the stream completes).
+
+---
+
+## Revision v3.2 (UX fixes + saved analyses)
+
+Navigation and UI:
+- Landing/app switching is hash based: app = `#app`, landing = `#landing`; browser Back/Forward works, logged-in users without a hash still land in the app. The app header has a "Back to site" button.
+- Analysis can be cancelled while streaming ("Stop" button → `AbortController`; the server sees the closed connection and stops generating). Partially generated text is kept and saved.
+- All modals (add property / auth / correction / legal) close by `Esc` and by clicking the backdrop. Landing: mobile menu closes on link click, footer Privacy/Terms open a real modal, Contact is a `mailto:` link.
+- Missing translations fall back to English instead of rendering the key path.
+
+Analysis output and storage:
+- The Results panel renders the model's markdown (`MarkdownLite.jsx`, no new dependencies): headings, bold/italic/inline code, nested lists, tables, blockquotes, rules, fenced code.
+- `/api/assess-risk` runs on `MODEL_FAST` (it only returns one JSON object; response time dropped to ~9 s).
+- `GET /api/analyzes` — all saved reports of the owner, `{ analyzes: { "<propertyId>": { "<mode>": { text, question, language, createdAt } } } | null }`. Owner resolution is the same as for properties (JWT → `user:<id>`, anonymous → `cid:<X-Client-Id>`).
+- `PUT /api/analyzes` — upsert one report: `{ propertyId, mode, text, question?, language?, createdAt? }`. `mode` matches `^[A-Za-z][A-Za-z0-9_-]{0,19}$` (overview / news / growth / risks / comparison / timeline / custom), `text` ≤ 120 000 chars, max 12 modes per property (oldest dropped). Stored in `analyzes.json` (atomic writes, included in the daily backup).
+- `DELETE /api/analyzes/<propertyId>` — drops all reports of a property (called when the property is deleted).
+- The client saves a report after a successful stream (or after the user presses Stop), keeps a localStorage copy (`real_estate_analyzes`), and restores the newest saved report of the selected property — previously one global `analysis` state leaked the text of the previously selected property and was lost on reload.
+- Results header shows the mode, the saved date and the custom question, plus "Copy" and "Markdown" (download `.md`) buttons.

@@ -91,3 +91,24 @@ Backups: cron (03:15 UTC) archives `users.json`, `quotas.json`, `properties.json
 
 Frontend + backend change: every analysis mode now passes `webSearch: true`, and both analyze endpoints send an analyst `system` prompt (`analystSystem()` in `server.js`). Rollback = `git reset --hard 564f830` + rebuild + restart.
 Optional env knob: `WEB_SEARCH_MAX_USES` (default 5) — Anthropic bills web search separately (~$10 / 1000 searches), lower it if the bill grows. Left-side panels (PDF parse, Risk Score) are still non-streamed JSON.
+
+## Deploy v3.2 note (UX fixes + saved analyses)
+
+New data file: `analyzes.json` (saved analysis per property + mode). New endpoints `GET/PUT /api/analyzes`, `DELETE /api/analyzes/<propertyId>`. No new npm deps.
+
+```bash
+cd /var/www/property-check
+git pull --ff-only
+cd frontend && npm run build && cd ..
+pm2 restart property-check --update-env   # server.js changed (assess-risk moved to MODEL_FAST)
+curl -s localhost:3001/api/health
+```
+
+Update the backup script once so the new file is archived (`tar` skips files that do not exist yet):
+
+```bash
+scp /tmp/pc-backup.sh root@SERVER:/usr/local/bin/pc-backup.sh && chmod +x /usr/local/bin/pc-backup.sh
+/usr/local/bin/pc-backup.sh && tar tzf /root/backups/pc-data-$(date +%F).tar.gz
+```
+
+Rollback: `git reset --hard b02a36c` (before saved analyses) + rebuild + restart. `analyzes.json` is additive — old builds simply ignore it.

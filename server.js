@@ -941,6 +941,96 @@ app.put('/api/properties', (req, res) => {
   }
 });
 
+// ===== Сохранённые анализы =====
+// Храним последний ответ Claude на каждый режим анализа, чтобы отчёт не терялся
+// после перезагрузки страницы и не генерировался повторно за деньги.
+// Структура: { ownerKey: { "<propertyId>": { "<mode>": { text, question, language, createdAt } } } }
+const ANALYZES_FILE = './analyzes.json';
+
+const loadAnalyzes = () => {
+  try {
+    if (fs.existsSync(ANALYZES_FILE)) return JSON.parse(fs.readFileSync(ANALYZES_FILE, 'utf8'));
+  } catch (e) {}
+  return {};
+};
+const saveAnalyzes = (a) => atomicWrite(ANALYZES_FILE, JSON.stringify(a));
+
+const MAX_ANALYSIS_MODES = 12;      // страховка от разрастания файла
+const MAX_ANALYSIS_TEXT = 120000;   // ~30k токенов — больше анализ не бывает
+
+// Все сохранённые анализы владельца
+app.get('/api/analyzes', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    if (!key) return res.json({ analyzes: null });
+    const all = loadAnalyzes();
+    res.json({ analyzes: all[key] || null });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to load analyzes' });
+  }
+});
+
+// Сохранить/обновить один анализ (propertyId + mode)
+app.put('/api/analyzes', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    if (!key) return res.status(400).json({ error: 'X-Client-Id header is required for anonymous sync' });
+
+    const { propertyId, mode, text, question, language, createdAt } = req.body || {};
+    if (propertyId === undefined || propertyId === null || propertyId === '') {
+      return res.status(400).json({ error: 'propertyId is required' });
+    }
+    const modeKey = String(mode || 'overview').slice(0, 20);
+    if (!/^[A-Za-z][A-Za-z0-9_-]{0,19}$/.test(modeKey)) return res.status(400).json({ error: 'Invalid mode' });
+    if (typeof text !== 'string' || !text.trim()) return res.status(400).json({ error: 'text is required' });
+    if (text.length > MAX_ANALYSIS_TEXT) return res.status(400).json({ error: 'Analysis text is too long' });
+
+    const pid = String(propertyId).slice(0, 64);
+    const all = loadAnalyzes();
+    const owner = all[key] || {};
+    const byMode = owner[pid] || {};
+    byMode[modeKey] = {
+      text,
+      question: typeof question === 'string' ? question.slice(0, 500) : null,
+      language: typeof language === 'string' ? language.slice(0, 8) : null,
+      createdAt: typeof createdAt === 'string' ? createdAt.slice(0, 40) : new Date().toISOString()
+    };
+
+    // Если режимов стало больше разумного — выбрасываем самые старые
+    const modes = Object.entries(byMode);
+    if (modes.length > MAX_ANALYSIS_MODES) {
+      modes.sort((a, b) => String(b[1]?.createdAt || '').localeCompare(String(a[1]?.createdAt || '')));
+      owner[pid] = Object.fromEntries(modes.slice(0, MAX_ANALYSIS_MODES));
+    } else {
+      owner[pid] = byMode;
+    }
+
+    all[key] = owner;
+    saveAnalyzes(all);
+    res.json({ success: true, modes: Object.keys(owner[pid]).length });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to save analyze' });
+  }
+});
+
+// Удалить все анализы объекта (вызывается при удалении объекта)
+app.delete('/api/analyzes/:propertyId', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    if (!key) return res.json({ success: true, removed: 0 });
+    const all = loadAnalyzes();
+    const owner = all[key];
+    if (owner && owner[req.params.propertyId]) {
+      delete owner[req.params.propertyId];
+      if (Object.keys(owner).length === 0) delete all[key];
+      saveAnalyzes(all);
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to delete analyzes' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running', version: require('./package.json').version, models: MODELS });

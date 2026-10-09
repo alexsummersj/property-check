@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
-import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square } from 'lucide-react';
+import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download } from 'lucide-react';
 import { translations, languages, getTranslation } from './i18n';
 import MarkdownLite from './MarkdownLite';
 
@@ -267,7 +267,19 @@ const LanguageSelector = () => {
 const STORAGE_KEYS = {
   PROPERTIES: 'real_estate_properties',
   RISKS: 'real_estate_risks',
+  ANALYZES: 'real_estate_analyzes',
   LANGUAGE: 'real_estate_language'
+};
+
+// Режимы анализа — ключи сохранённых отчётов и подписи на кнопках
+const ANALYSIS_MODE_LABELS = {
+  overview: 'analysis.overview',
+  news: 'analysis.news',
+  growth: 'analysis.growth',
+  risks: 'analysis.risks',
+  comparison: 'analysis.regions',
+  timeline: 'analysis.timeline',
+  custom: 'analysis.customQuestion'
 };
 
 // Стабильный идентификатор анонимного клиента — для серверного хранения свойств до регистрации
@@ -759,6 +771,13 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analysis, setAnalysis] = useState(null);
+  // Сохранённые отчёты: { "<propertyId>": { "<mode>": { text, question, language, createdAt } } }
+  const [analyzes, setAnalyzes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.ANALYZES) || '{}'); } catch { return {}; }
+  });
+  // Что именно сейчас показано в блоке «Результаты»
+  const [analysisInfo, setAnalysisInfo] = useState(null);
+  const [analysisCopied, setAnalysisCopied] = useState(false);
   const [query, setQuery] = useState('');
   const [error, setError] = useState(null);
   const [riskLoading, setRiskLoading] = useState({});
@@ -826,6 +845,10 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
   }, [risks]);
 
   useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEYS.ANALYZES, JSON.stringify(analyzes)); } catch {}
+  }, [analyzes]);
+
+  useEffect(() => {
     if (properties.length > 0 && !selectedProperty) {
       setSelectedProperty(properties[0]);
     }
@@ -868,8 +891,85 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     }
   };
 
-  // При загрузке и при входе/выходе — тянем список нового владельца с сервера
-  useEffect(() => { pullPropertiesFromServer(); }, [user]);
+  // ===== Сохранённые анализы (сервер + localStorage как кэш) =====
+  const analyzesRef = useRef(analyzes);
+  useEffect(() => { analyzesRef.current = analyzes; }, [analyzes]);
+
+  const saveAnalysisToServer = (payload) => {
+    try {
+      fetch('/api/analyzes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Client-Id': getClientId() },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    } catch {}
+  };
+
+  const saveAnalysis = (propertyId, mode, text, question) => {
+    if (!propertyId || !text || !text.trim()) return;
+    const entry = { text, question: question || null, language, createdAt: new Date().toISOString() };
+    setAnalyzes(prev => ({ ...prev, [propertyId]: { ...(prev[propertyId] || {}), [mode]: entry } }));
+    setAnalysisInfo({ mode, question: entry.question, createdAt: entry.createdAt, cached: false });
+    saveAnalysisToServer({ propertyId, mode, text, question: entry.question, language, createdAt: entry.createdAt });
+  };
+
+  // Показываем последний сохранённый отчёт конкретного объекта
+  const applySavedAnalysis = (store, propertyId) => {
+    const byMode = store?.[propertyId];
+    const entries = Object.entries(byMode || {}).filter(([, e]) => e && e.text);
+    if (entries.length === 0) { setAnalysis(null); setAnalysisInfo(null); return; }
+    const [mode, entry] = entries.sort((a, b) => String(b[1].createdAt || '').localeCompare(String(a[1].createdAt || '')))[0];
+    setAnalysis(entry.text);
+    setAnalysisInfo({ mode, question: entry.question || null, createdAt: entry.createdAt, cached: true });
+  };
+
+  const pullAnalyzesFromServer = async () => {
+    try {
+      const r = await fetch('/api/analyzes', { headers: { ...authHeader(), 'X-Client-Id': getClientId() } });
+      if (!r.ok) return;
+      const d = await r.json();
+      const local = analyzesRef.current;
+
+      if (!d.analyzes) {
+        // На сервере ещё нет данных — загружаем то, что уже есть в этом браузере
+        Object.entries(local).forEach(([pid, byMode]) => {
+          Object.entries(byMode || {}).forEach(([mode, e]) => saveAnalysisToServer({
+            propertyId: pid, mode, text: e.text, question: e.question, language: e.language, createdAt: e.createdAt
+          }));
+        });
+        return;
+      }
+
+      // Победил более свежий createdAt: локальный только что сгенерированный отчёт
+      // не должен затираться серверной копией
+      setAnalyzes(() => {
+        const merged = {};
+        new Set([...Object.keys(d.analyzes), ...Object.keys(local)]).forEach((pid) => {
+          const serverByMode = d.analyzes[pid] || {};
+          const localByMode = local[pid] || {};
+          merged[pid] = {};
+          new Set([...Object.keys(serverByMode), ...Object.keys(localByMode)]).forEach((m) => {
+            const s = serverByMode[m];
+            const l = localByMode[m];
+            merged[pid][m] = (!l || String(l.createdAt || '') < String(s?.createdAt || '')) ? s : l;
+          });
+        });
+        return merged;
+      });
+    } catch {}
+  };
+
+  // При загрузке и при входе/выходе — тянем данные нового владельца с сервера
+  useEffect(() => { pullPropertiesFromServer(); pullAnalyzesFromServer(); }, [user]);
+
+  // Переключение объекта показывает его собственный сохранённый отчёт, а не текст
+  // предыдущего объекта (раньше analysis был одним глобальным state на всё приложение)
+  useEffect(() => {
+    if (loading) return; // во время стрима текстом управляет поток
+    if (!selectedProperty) { setAnalysis(null); setAnalysisInfo(null); return; }
+    applySavedAnalysis(analyzes, selectedProperty.id);
+  }, [selectedProperty?.id, analyzes, loading]);
+
 
   // Любое изменение списка — отправляем на сервер с дебаунсом (не раньше первой загрузки с сервера)
   useEffect(() => {
@@ -1104,6 +1204,12 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     const remaining = properties.filter(p => p.id !== id);
     setProperties(remaining);
     setRisks(prev => { const newRisks = { ...prev }; delete newRisks[id]; return newRisks; });
+    // Анализы удалённого объекта больше не нужны — иначе analyzes.json будет расти бесконечно
+    setAnalyzes(prev => { const next = { ...prev }; delete next[id]; return next; });
+    fetch(`/api/analyzes/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { ...authHeader(), 'X-Client-Id': getClientId() }
+    }).catch(() => {});
     if (selectedProperty?.id === id) {
       // Выбираем соседа по индексу, а не всегда первый объект
       const idx = properties.findIndex(p => p.id === id);
@@ -1135,6 +1241,8 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     }
     setLoading(true);
     setError(null);
+    const mode = opts.mode || 'overview';
+    const propId = (selectedProperty || properties[0])?.id ?? null;
     let acc = ''; // вне try, чтобы не терять уже сгенерированный текст при остановке или ошибке
 
     try {
@@ -1186,14 +1294,19 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
       if (!acc.trim()) throw new Error('Empty AI response');
       incrementAnalysisCount();
       setAnalysis(acc);
+      saveAnalysis(propId, mode, acc, opts.question);
     } catch (err) {
       if (err.name === 'AbortError') {
-        // Пользователь сам остановил анализ — показываем то, что уже успело сгенерироваться
+        // Пользователь сам остановил анализ — показываем и сохраняем то, что успело сгенерироваться
+        if (acc.trim()) saveAnalysis(propId, mode, acc, opts.question);
         setAnalysis(acc.trim() ? acc : null);
       } else {
         console.error('Error:', err);
         setError(err.message || 'Error getting analysis');
-        setAnalysis(acc.trim() ? acc : null);
+        // Если не успело сгенерироваться ничего — возвращаем на экран последний
+        // сохранённый отчёт этого объекта, а не пустой блок
+        if (acc.trim()) setAnalysis(acc);
+        else applySavedAnalysis(analyzesRef.current, propId);
       }
     } finally {
       streamAbortRef.current = null;
@@ -1203,6 +1316,48 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
 
   const stopAnalysis = () => {
     try { streamAbortRef.current?.abort(); } catch {}
+  };
+
+  const markCopied = () => {
+    setAnalysisCopied(true);
+    setTimeout(() => setAnalysisCopied(false), 1500);
+  };
+
+  const copyAnalysis = async () => {
+    if (!analysis) return;
+    try {
+      await navigator.clipboard.writeText(analysis);
+      markCopied();
+    } catch {
+      // Clipboard API есть не везде (например, не на HTTP) — пробуем старый способ
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = analysis;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        markCopied();
+      } catch {}
+    }
+  };
+
+  const downloadAnalysis = () => {
+    if (!analysis) return;
+    const name = (currentProperty?.name || 'property').replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').slice(0, 60) || 'property';
+    const blob = new Blob([analysis], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}-${analysisInfo?.mode || 'analysis'}.md`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const formatSavedDate = (iso) => {
+    try { return new Date(iso).toLocaleDateString(language, { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return ''; }
   };
 
   const getLangInstruction = () => {
@@ -1265,7 +1420,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
 
     // Веб-поиск включён для всех режимов: без него Claude отвечает по весам модели
     // и приклеивает дисклеймер про устаревшие данные
-    analyzeWithClaude(prompt, { webSearch: true });
+    analyzeWithClaude(prompt, { webSearch: true, mode: type });
   };
 
   const handleCustomQuery = () => {
@@ -1279,7 +1434,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     const langInstruction = getLangInstruction();
 
     const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location, prop.sizeUnits)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
-    analyzeWithClaude(contextPrompt, { webSearch: true });
+    analyzeWithClaude(contextPrompt, { webSearch: true, mode: 'custom', question: query.trim() });
     setQuery('');
   };
 
@@ -1582,6 +1737,30 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                   </div>
                 )}
               </div>
+
+              {analysis && !loading && (
+                <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                  <div className="flex items-center gap-2 flex-wrap text-xs text-gray-400">
+                    <span className="px-2 py-1 bg-white/10 rounded text-gray-300">{t(ANALYSIS_MODE_LABELS[analysisInfo?.mode] || 'analysis.results')}</span>
+                    {analysisInfo?.createdAt && (
+                      <span title={t('analysis.savedOn')}>🗂 {formatSavedDate(analysisInfo.createdAt)}</span>
+                    )}
+                    {analysisInfo?.question && (
+                      <span className="text-gray-500 max-w-[260px] truncate">“{analysisInfo.question}”</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={copyAnalysis} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                      {analysisCopied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      {analysisCopied ? t('analysis.copied') : t('analysis.copy')}
+                    </button>
+                    <button onClick={downloadAnalysis} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                      <Download className="w-3.5 h-3.5" />
+                      {t('analysis.download')}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {error && <div className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg mb-4"><p className="text-red-400">❌ {error}</p></div>}
 

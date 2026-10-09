@@ -27,13 +27,19 @@ function renderInline(text, keyBase) {
 }
 
 const HEADING_CLASS = {
-  1: 'text-lg sm:text-xl font-bold text-white mt-5 mb-2',
-  2: 'text-lg font-bold text-white mt-5 mb-2',
-  3: 'text-base font-semibold text-blue-200 mt-4 mb-1.5',
-  4: 'text-sm font-semibold text-gray-100 mt-3 mb-1',
-  5: 'text-sm font-semibold text-gray-100 mt-3 mb-1',
-  6: 'text-sm font-semibold text-gray-300 mt-3 mb-1'
+  1: 'text-lg sm:text-xl font-bold text-white',
+  2: 'text-lg font-bold text-white',
+  3: 'text-base font-semibold text-blue-200',
+  4: 'text-sm font-semibold text-gray-100',
+  5: 'text-sm font-semibold text-gray-100',
+  6: 'text-sm font-semibold text-gray-300'
 };
+
+// Отступы сверху задаём одним классом: если написать mt-5 и mt-0 одновременно,
+// победит не порядок в атрибуте class, а порядок в сгенерированном CSS
+const headingMargin = (level, isFirst) =>
+  isFirst ? 'mt-0' : level <= 2 ? 'mt-5 mb-2' : level === 3 ? 'mt-4 mb-1.5' : 'mt-3 mb-1';
+
 
 function parseCells(row) {
   return row.replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
@@ -123,7 +129,7 @@ export default function MarkdownLite({ text, className = '' }) {
           case 'h':
             return React.createElement(
               `h${Math.min(block.level + 1, 6)}`, // в карточке h1 был бы слишком крупным
-              { key: i, className: `${HEADING_CLASS[block.level]} ${i === 0 ? 'mt-0' : ''}` },
+              { key: i, className: `${HEADING_CLASS[block.level]} ${headingMargin(block.level, i === 0)}` },
               renderInline(block.text, `h${i}`)
             );
 

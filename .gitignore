@@ -6,7 +6,7 @@ frontend/dist/
 *.log
 .DS_Store
 users.json
-users.json
 quotas.json
 properties.json
+analyzes.json
 

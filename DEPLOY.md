@@ -104,11 +104,11 @@ pm2 restart property-check --update-env   # server.js changed (assess-risk moved
 curl -s localhost:3001/api/health
 ```
 
-Update the backup script once so the new file is archived (`tar` skips files that do not exist yet):
+Update the backup script once so the new file is archived (`tar` skips files that do not exist yet). Upload with LF endings — a CRLF shebang makes cron fail with `cannot execute: required file not found`:
 
 ```bash
-scp /tmp/pc-backup.sh root@SERVER:/usr/local/bin/pc-backup.sh && chmod +x /usr/local/bin/pc-backup.sh
-/usr/local/bin/pc-backup.sh && tar tzf /root/backups/pc-data-$(date +%F).tar.gz
+scp /tmp/pc-backup.sh root@SERVER:/usr/local/bin/pc-backup.sh
+ssh root@SERVER "tr -d '\r' < /usr/local/bin/pc-backup.sh > /tmp/pb && mv /tmp/pb /usr/local/bin/pc-backup.sh && chmod +x /usr/local/bin/pc-backup.sh && /usr/local/bin/pc-backup.sh && tar tzf /root/backups/pc-data-*.tar.gz"
 ```
 
 Rollback: `git reset --hard b02a36c` (before saved analyses) + rebuild + restart. `analyzes.json` is additive — old builds simply ignore it.

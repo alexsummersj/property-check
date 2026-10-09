@@ -120,9 +120,9 @@ const getUserFromReq = (req) => {
     const decoded = jwt.verify(h.split(' ')[1], JWT_SECRET);
     const user = loadUsers().find(u => u.id === decoded.id) || null;
     if (!user) return null;
-    // После смены пароля старые токены больше не действуют (у JWT нет отзыва,
-    // поэтому сравниваем iat с моментом смены; запас 2с — iat округлён до секунды)
-    if (user.passwordChangedAt && decoded.iat && decoded.iat * 1000 < user.passwordChangedAt - 2000) return null;
+    // Смена пароля инвалидирует ранее выданные токены (у JWT нет отзыва): в токене
+    // лежит отметка версии пароля pwdAt, она обязана совпадать с текущей
+    if (user.passwordChangedAt && (decoded.pwdAt || 0) !== user.passwordChangedAt) return null;
     return user;
   } catch (e) {
     return null;
@@ -227,7 +227,7 @@ app.post('/api/register', async (req, res) => {
     users.push(newUser);
     saveUsers(users);
     
-    const token = jwt.sign({ id: newUser.id, email: newUser.email }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: newUser.id, email: newUser.email, pwdAt: newUser.passwordChangedAt || 0 }, JWT_SECRET, { expiresIn: '30d' });
     
     res.json({ 
       success: true, 
@@ -258,7 +258,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+    const token = jwt.sign({ id: user.id, email: user.email, pwdAt: user.passwordChangedAt || 0 }, JWT_SECRET, { expiresIn: '30d' });
     
     res.json({ 
       success: true, 

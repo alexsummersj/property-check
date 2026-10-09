@@ -271,16 +271,20 @@ const STORAGE_KEYS = {
   LANGUAGE: 'real_estate_language'
 };
 
-// Режимы анализа — ключи сохранённых отчётов и подписи на кнопках
-const ANALYSIS_MODE_LABELS = {
-  overview: 'analysis.overview',
-  news: 'analysis.news',
-  growth: 'analysis.growth',
-  risks: 'analysis.risks',
-  comparison: 'analysis.regions',
-  timeline: 'analysis.timeline',
-  custom: 'analysis.customQuestion'
-};
+// Режимы анализа. Кнопка с уже сохранённым отчётом показывается мгновенно и
+// бесплатно, повторно в Claude идёт только «Обновить»
+const ANALYSIS_MODES = [
+  { type: 'overview', label: 'analysis.overview', icon: FileText, cls: 'from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 border-blue-500/30', iconCls: 'text-blue-400' },
+  { type: 'news', label: 'analysis.news', icon: Search, cls: 'from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 border-purple-500/30', iconCls: 'text-purple-400' },
+  { type: 'growth', label: 'analysis.growth', icon: TrendingUp, cls: 'from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 border-green-500/30', iconCls: 'text-green-400' },
+  { type: 'risks', label: 'analysis.risks', icon: AlertCircle, cls: 'from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 border-red-500/30', iconCls: 'text-red-400' },
+  { type: 'comparison', label: 'analysis.regions', icon: MapPin, cls: 'from-yellow-500/20 to-yellow-600/20 hover:from-yellow-500/30 hover:to-yellow-600/30 border-yellow-500/30', iconCls: 'text-yellow-400' },
+  { type: 'timeline', label: 'analysis.timeline', icon: Calendar, cls: 'from-indigo-500/20 to-indigo-600/20 hover:from-indigo-500/30 hover:to-indigo-600/30 border-indigo-500/30', iconCls: 'text-indigo-400' }
+];
+
+const ANALYSIS_MODE_LABELS = Object.fromEntries(
+  [...ANALYSIS_MODES.map((m) => [m.type, m.label]), ['custom', 'analysis.customQuestion']]
+);
 
 // Стабильный идентификатор анонимного клиента — для серверного хранения свойств до регистрации
 const CLIENT_ID_KEY = 'pc_client_id';
@@ -913,12 +917,14 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     saveAnalysisToServer({ propertyId, mode, text, question: entry.question, language, createdAt: entry.createdAt });
   };
 
-  // Показываем последний сохранённый отчёт конкретного объекта
-  const applySavedAnalysis = (store, propertyId) => {
+  // Показываем сохранённый отчёт конкретного объекта. Если режим уже был выбран
+  // (например, пользователь кликнул «Риски»), держим его, а не прыгаем на самый свежий
+  const applySavedAnalysis = (store, propertyId, preferredMode) => {
     const byMode = store?.[propertyId];
     const entries = Object.entries(byMode || {}).filter(([, e]) => e && e.text);
     if (entries.length === 0) { setAnalysis(null); setAnalysisInfo(null); return; }
-    const [mode, entry] = entries.sort((a, b) => String(b[1].createdAt || '').localeCompare(String(a[1].createdAt || '')))[0];
+    const preferred = preferredMode && byMode[preferredMode]?.text ? [preferredMode, byMode[preferredMode]] : null;
+    const [mode, entry] = preferred || entries.sort((a, b) => String(b[1].createdAt || '').localeCompare(String(a[1].createdAt || '')))[0];
     setAnalysis(entry.text);
     setAnalysisInfo({ mode, question: entry.question || null, createdAt: entry.createdAt, cached: true });
   };
@@ -967,7 +973,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
   useEffect(() => {
     if (loading) return; // во время стрима текстом управляет поток
     if (!selectedProperty) { setAnalysis(null); setAnalysisInfo(null); return; }
-    applySavedAnalysis(analyzes, selectedProperty.id);
+    applySavedAnalysis(analyzes, selectedProperty.id, analysisInfo?.mode);
   }, [selectedProperty?.id, analyzes, loading]);
 
 
@@ -1306,7 +1312,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
         // Если не успело сгенерироваться ничего — возвращаем на экран последний
         // сохранённый отчёт этого объекта, а не пустой блок
         if (acc.trim()) setAnalysis(acc);
-        else applySavedAnalysis(analyzesRef.current, propId);
+        else applySavedAnalysis(analyzesRef.current, propId, mode);
       }
     } finally {
       streamAbortRef.current = null;
@@ -1379,9 +1385,20 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     return instructions[language] || 'Answer in English.';
   };
 
-  const runAnalysis = (type) => {
+  // Клик по режиму: если отчёт этого объекта уже сохранён — показываем его сразу,
+  // без нового запроса к Claude (он стоит денег и десятков секунд). Повторная
+  // генерация — только через force (кнопка «Обновить»)
+  const runAnalysis = (type, force = false) => {
     const prop = selectedProperty || properties[0];
     if (!prop) return;
+
+    const saved = analyzes[prop.id]?.[type];
+    if (!force && saved?.text) {
+      setError(null);
+      setAnalysis(saved.text);
+      setAnalysisInfo({ mode: type, question: saved.question || null, createdAt: saved.createdAt, cached: true });
+      return;
+    }
 
     const extraInfo = [];
     if (prop.paymentPlan) extraInfo.push(`Payment plan: ${prop.paymentPlan}`);
@@ -1423,8 +1440,9 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     analyzeWithClaude(prompt, { webSearch: true, mode: type });
   };
 
-  const handleCustomQuery = () => {
-    if (!query.trim() || !selectedProperty) return;
+  const askQuestion = (q) => {
+    const text = String(q || '').trim();
+    if (!text || !selectedProperty) return;
     const prop = selectedProperty;
     const today = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
     const correctionsContext = prop.corrections?.length > 0
@@ -1433,9 +1451,22 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
 
     const langInstruction = getLangInstruction();
 
-    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location, prop.sizeUnits)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${query}\n\n${langInstruction}`;
-    analyzeWithClaude(contextPrompt, { webSearch: true, mode: 'custom', question: query.trim() });
+    const contextPrompt = `Today is ${today}. Context: "${prop.name}" in ${prop.location}. ${prop.type}, ${formatArea(prop.size, prop.location, prop.sizeUnits)}, ${prop.price}, completion ${prop.completion}, developer ${prop.developer}.${correctionsContext}\n\nQuestion: ${text}\n\n${langInstruction}`;
+    analyzeWithClaude(contextPrompt, { webSearch: true, mode: 'custom', question: text });
+  };
+
+  const handleCustomQuery = () => {
+    if (!query.trim() || !selectedProperty) return;
+    askQuestion(query);
     setQuery('');
+  };
+
+  // Единственное место, где отчёт генерируется повторно и тратит лимит
+  const refreshAnalysis = () => {
+    const mode = analysisInfo?.mode;
+    if (!mode || !currentProperty || loading) return;
+    if (mode === 'custom') askQuestion(analysisInfo?.question || query);
+    else runAnalysis(mode, true);
   };
 
   const currentProperty = selectedProperty;
@@ -1680,30 +1711,29 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
             <div className="bg-white/5 backdrop-blur-lg rounded-xl p-6 border border-white/10">
               <h2 className="text-lg font-semibold mb-4">{t('analysis.title')}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <button onClick={() => runAnalysis('overview')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/20 hover:from-blue-500/30 hover:to-blue-600/30 rounded-lg border border-blue-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
-                  <FileText className="w-6 h-6 text-blue-400" />
-                  <span className="text-sm font-medium">{t('analysis.overview')}</span>
-                </button>
-                <button onClick={() => runAnalysis('news')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-purple-500/20 to-purple-600/20 hover:from-purple-500/30 hover:to-purple-600/30 rounded-lg border border-purple-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
-                  <Search className="w-6 h-6 text-purple-400" />
-                  <span className="text-sm font-medium">{t('analysis.news')}</span>
-                </button>
-                <button onClick={() => runAnalysis('growth')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-green-500/20 to-green-600/20 hover:from-green-500/30 hover:to-green-600/30 rounded-lg border border-green-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
-                  <TrendingUp className="w-6 h-6 text-green-400" />
-                  <span className="text-sm font-medium">{t('analysis.growth')}</span>
-                </button>
-                <button onClick={() => runAnalysis('risks')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 rounded-lg border border-red-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
-                  <AlertCircle className="w-6 h-6 text-red-400" />
-                  <span className="text-sm font-medium">{t('analysis.risks')}</span>
-                </button>
-                <button onClick={() => runAnalysis('comparison')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 hover:from-yellow-500/30 hover:to-yellow-600/30 rounded-lg border border-yellow-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
-                  <MapPin className="w-6 h-6 text-yellow-400" />
-                  <span className="text-sm font-medium">{t('analysis.regions')}</span>
-                </button>
-                <button onClick={() => runAnalysis('timeline')} disabled={loading || !currentProperty} className="p-4 bg-gradient-to-br from-indigo-500/20 to-indigo-600/20 hover:from-indigo-500/30 hover:to-indigo-600/30 rounded-lg border border-indigo-500/30 transition flex flex-col items-center gap-2 disabled:opacity-50">
-                  <Calendar className="w-6 h-6 text-indigo-400" />
-                  <span className="text-sm font-medium">{t('analysis.timeline')}</span>
-                </button>
+                {ANALYSIS_MODES.map((m) => {
+                  const Icon = m.icon;
+                  const savedEntry = currentProperty ? analyzes[currentProperty.id]?.[m.type] : null;
+                  const isActive = !loading && !!analysis && analysisInfo?.mode === m.type;
+                  return (
+                    <button
+                      key={m.type}
+                      onClick={() => runAnalysis(m.type)}
+                      disabled={loading || !currentProperty}
+                      title={savedEntry?.createdAt
+                        ? `${t('analysis.savedOn')}: ${formatSavedDate(savedEntry.createdAt)}`
+                        : t('analysis.notRunYet')}
+                      className={`relative p-4 bg-gradient-to-br ${m.cls} rounded-lg border transition flex flex-col items-center gap-2 disabled:opacity-50 ${isActive ? 'ring-2 ring-white/70' : ''}`}
+                    >
+                      {savedEntry?.text && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-400" />}
+                      <Icon className={`w-6 h-6 ${m.iconCls}`} />
+                      <span className="text-sm font-medium">{t(m.label)}</span>
+                      {savedEntry?.createdAt && (
+                        <span className="text-[10px] text-gray-400 leading-none">{formatSavedDate(savedEntry.createdAt)}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1742,6 +1772,9 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                 <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                   <div className="flex items-center gap-2 flex-wrap text-xs text-gray-400">
                     <span className="px-2 py-1 bg-white/10 rounded text-gray-300">{t(ANALYSIS_MODE_LABELS[analysisInfo?.mode] || 'analysis.results')}</span>
+                    {analysisInfo?.cached && (
+                      <span className="px-2 py-1 bg-green-500/15 text-green-300 rounded border border-green-500/30">{t('analysis.savedBadge')}</span>
+                    )}
                     {analysisInfo?.createdAt && (
                       <span title={t('analysis.savedOn')}>🗂 {formatSavedDate(analysisInfo.createdAt)}</span>
                     )}
@@ -1750,6 +1783,14 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={refreshAnalysis}
+                      title={t('analysis.refreshHint')}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      {t('analysis.refresh')}
+                    </button>
                     <button onClick={copyAnalysis} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
                       {analysisCopied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
                       {analysisCopied ? t('analysis.copied') : t('analysis.copy')}

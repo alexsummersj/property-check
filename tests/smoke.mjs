@@ -19,17 +19,26 @@ const pass = [], fail = [], skipped = [];
 const check = (name, cond, extra = '') => (cond ? pass : fail).push(`${cond ? 'PASS' : 'FAIL'} ${name}${extra ? ' — ' + extra : ''}`);
 const note = (name, why) => skipped.push(`SKIP ${name} — ${why}`);
 
-const req = async (path, { method = 'GET', body, token, clientId } = {}) => {
-  const r = await fetch(BASE + path, {
-    method,
-    headers: {
-      ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...(clientId ? { 'X-Client-Id': clientId } : {})
-    },
-    body: body === undefined ? undefined : JSON.stringify(body)
-  });
-  return { status: r.status, body: await r.json().catch(() => ({})) };
+const req = async (path, { method = 'GET', body, token, clientId, retryOn429 = true } = {}) => {
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch(BASE + path, {
+      method,
+      headers: {
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(token ? { Authorization: 'Bearer ' + token } : {}),
+        ...(clientId ? { 'X-Client-Id': clientId } : {})
+      },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+    const parsed = await r.json().catch(() => ({}));
+    // На /api висит общий лимит 60 запросов/мин на IP, а набор делает ~35 запросов подряд:
+    // при повторном прогоне можно упереться в него и получить ложный FAIL, поэтому подождать и повторить
+    if (r.status === 429 && retryOn429 && attempt < 4) {
+      await new Promise((resolve) => setTimeout(resolve, 12000));
+      continue;
+    }
+    return { status: r.status, body: parsed };
+  }
 };
 
 const dropTestUser = () => {
@@ -112,10 +121,12 @@ const main = async () => {
   check('deleting a property removes its reports', r.status === 200 && (!r.body.analyzes || r.body.analyzes[PROP] === undefined));
 
   // ---- сброс пароля ----
-  r = await req('/api/forgot-password', { method: 'POST', body: { email: 'nobody-' + Date.now() + '@example.test' } });
-  check('forgot for an unknown email does not leak it', r.status === 200 && r.body.success === true && !r.body.resetToken);
+  // лимит на сброс считается 15 минутами, ждать его бессмысленно — сразу SKIP
+  r = await req('/api/forgot-password', { method: 'POST', body: { email: 'nobody-' + Date.now() + '@example.test' }, retryOn429: false });
+  if (r.status === 429) note('forgot for an unknown email', 'rate limited (20 requests / 15 min per IP)');
+  else check('forgot for an unknown email does not leak it', r.status === 200 && r.body.success === true && !r.body.resetToken);
 
-  r = await req('/api/forgot-password', { method: 'POST', body: { email: EMAIL } });
+  r = await req('/api/forgot-password', { method: 'POST', body: { email: EMAIL }, retryOn429: false });
   const resetToken = r.body.resetToken;
   if (r.status === 429) {
     note('password reset flow', 'rate limited (20 requests / 15 min per IP)');

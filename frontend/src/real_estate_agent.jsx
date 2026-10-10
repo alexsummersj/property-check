@@ -549,6 +549,7 @@ const getResetTokenFromUrl = () => {
 // Шаги: login | register | forgot (ввели email) | reset (вводим новый пароль) | sent (ссылка отправлена)
 const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
   useEscapeClose(onClose);
+  const t = useT();
   const [mode, setMode] = useState(initialResetToken ? 'reset' : 'login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -570,7 +571,7 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
 
   const handleSubmit = async () => {
     if (!email || !password) {
-      setError('Please fill all fields');
+      setError(t('auth.fillAll'));
       return;
     }
     setLoading(true);
@@ -590,14 +591,14 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
         finishLogin(data);
       }
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(t('auth.connectionError'));
     } finally {
       setLoading(false);
     }
   };
 
   const submitForgot = async () => {
-    if (!email) { setError('Please enter your email'); return; }
+    if (!email) { setError(t('auth.emailRequired')); return; }
     setLoading(true);
     setError('');
     try {
@@ -607,25 +608,25 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
         body: JSON.stringify({ email })
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) { setError(d.error || 'Something went wrong'); return; }
+      if (!r.ok) { setError(d.error || t('auth.somethingWrong')); return; }
       if (d.resetToken) {
         // Почтовый провайдер ещё не подключён — показываем ссылку прямо здесь
         setResetToken(d.resetToken);
         setMode('reset');
       } else {
         setMode('sent');
-        setInfo('If this email is registered, a reset link is on its way. The link is valid for 1 hour.');
+        setInfo(t('auth.sentInfo'));
       }
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(t('auth.connectionError'));
     } finally {
       setLoading(false);
     }
   };
 
   const submitReset = async () => {
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
-    if (password !== password2) { setError('Passwords do not match'); return; }
+    if (password.length < 6) { setError(t('auth.shortPassword')); return; }
+    if (password !== password2) { setError(t('auth.passwordsDiffer')); return; }
     setLoading(true);
     setError('');
     try {
@@ -635,7 +636,7 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
         body: JSON.stringify({ token: resetToken, password })
       });
       const d = await r.json().catch(() => ({}));
-      if (!r.ok || d.error) { setError(d.error || 'Could not reset the password'); return; }
+      if (!r.ok || d.error) { setError(d.error || t('auth.resetFailed')); return; }
 
       // Пользователь уже ввёл новый пароль дважды — сразу входим им
       if (email) {
@@ -648,9 +649,9 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
         if (lr.ok && ld.token) { finishLogin(ld); return; }
       }
       switchMode('login');
-      setInfo('Password updated — please sign in.');
+      setInfo(t('auth.updated'));
     } catch (err) {
-      setError('Connection error. Please try again.');
+      setError(t('auth.connectionError'));
     } finally {
       setLoading(false);
     }
@@ -665,8 +666,8 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
     } catch {}
   };
 
-  const titles = { login: 'Welcome Back', register: 'Create Account', forgot: 'Reset password', reset: 'New password', sent: 'Check your email' };
-  const cta = { login: 'Sign In', register: 'Create Account', forgot: 'Send reset link', reset: 'Save password', sent: 'Back to sign in' };
+  const titles = { login: 'auth.welcome', register: 'auth.createAccount', forgot: 'auth.forgotTitle', reset: 'auth.resetTitle', sent: 'auth.sentTitle' };
+  const cta = { login: 'auth.signIn', register: 'auth.signUp', forgot: 'auth.sendLink', reset: 'auth.savePassword', sent: 'auth.backToSignIn' };
   const primaryAction = (mode === 'login' || mode === 'register') ? handleSubmit
     : mode === 'forgot' ? submitForgot
     : mode === 'reset' ? submitReset
@@ -676,12 +677,12 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full border border-white/10" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold">{titles[mode] || titles.login}</h3>
+          <h3 className="text-xl font-bold">{t(titles[mode] || titles.login)}</h3>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition"><X className="w-5 h-5" /></button>
         </div>
         {(mode === 'login' || mode === 'register') && (
           <div className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-            <p className="text-sm text-blue-300">🎉 Sign up for unlimited free analyses during our beta!</p>
+            <p className="text-sm text-blue-300">{t('auth.promo')}</p>
           </div>
         )}
         {error && <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg"><p className="text-sm text-red-400">{error}</p></div>}
@@ -689,62 +690,62 @@ const AuthModal = ({ onClose, onSuccess, initialResetToken }) => {
         <div className="space-y-4">
           {mode === 'register' && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Name</label>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-sm text-gray-400 mb-1">{t('auth.name')}</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('auth.namePlaceholder')} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           )}
           {mode !== 'reset' && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Email</label>
+              <label className="block text-sm text-gray-400 mb-1">{t('auth.email')}</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           )}
           {mode === 'reset' && resetLink && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Reset link (valid 1 hour)</label>
+              <label className="block text-sm text-gray-400 mb-1">{t('auth.linkLabel')}</label>
               <div className="flex gap-2">
                 <input readOnly value={resetLink} onFocus={(e) => e.target.select()} className="w-full px-3 py-3 text-xs bg-white/10 border border-white/20 rounded-lg font-mono" />
-                <button onClick={copyResetLink} className="px-3 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">{copied ? 'Copied' : 'Copy'}</button>
+                <button onClick={copyResetLink} className="px-3 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">{copied ? t('auth.copied') : t('auth.copy')}</button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">We do not send email yet — this link is your reset code. Open it on another device if needed.</p>
+              <p className="text-xs text-gray-500 mt-1">{t('auth.linkHint')}</p>
             </div>
           )}
           {mode === 'sent' && (
-            <p className="text-sm text-gray-400">The link expires in 1 hour. If nothing arrives, write to hello@property-check.com.</p>
+            <p className="text-sm text-gray-400">{t('auth.sentBody')}</p>
           )}
           {(mode === 'login' || mode === 'register') && (
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Password</label>
+              <label className="block text-sm text-gray-400 mb-1">{t('auth.password')}</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" onKeyPress={(e) => e.key === 'Enter' && handleSubmit()} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           )}
           {mode === 'reset' && (
             <>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">New password</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="at least 6 characters" className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm text-gray-400 mb-1">{t('auth.newPassword')}</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.passwordPlaceholder')} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-1">Repeat password</label>
+                <label className="block text-sm text-gray-400 mb-1">{t('auth.repeatPassword')}</label>
                 <input type="password" value={password2} onChange={(e) => setPassword2(e.target.value)} placeholder="••••••••" onKeyPress={(e) => e.key === 'Enter' && submitReset()} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
             </>
           )}
           <button onClick={primaryAction} disabled={loading} className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 rounded-lg font-medium transition disabled:opacity-50 flex items-center justify-center gap-2">
-            {loading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>Please wait...</span></> : <span>{cta[mode] || cta.login}</span>}
+            {loading ? <><Loader2 className="w-5 h-5 animate-spin" /><span>{t('auth.wait')}</span></> : <span>{t(cta[mode] || cta.login)}</span>}
           </button>
         </div>
         <div className="mt-4 text-center space-y-2">
           {mode === 'login' && (
-            <div><button onClick={() => switchMode('forgot')} className="text-sm text-gray-400 hover:text-white transition">Forgot password?</button></div>
+            <div><button onClick={() => switchMode('forgot')} className="text-sm text-gray-400 hover:text-white transition">{t('auth.forgotLink')}</button></div>
           )}
           <div>
             <button onClick={() => switchMode(mode === 'register' ? 'login' : 'register')} className="text-sm text-gray-400 hover:text-white transition">
-              {mode === 'register' ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+              {t(mode === 'register' ? 'auth.haveAccount' : 'auth.noAccount')}
             </button>
           </div>
           {(mode === 'forgot' || mode === 'reset' || mode === 'sent') && (
-            <div><button onClick={() => switchMode('login')} className="text-sm text-gray-400 hover:text-white transition">Back to sign in</button></div>
+            <div><button onClick={() => switchMode('login')} className="text-sm text-gray-400 hover:text-white transition">{t('auth.backToSignIn')}</button></div>
           )}
         </div>
       </div>
@@ -1684,8 +1685,8 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                   <Search className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold">Property Check</h1>
-                  <p className="text-sm text-gray-400">Global Real Estate Investment Analysis</p>
+                  <h1 className="text-xl sm:text-2xl font-bold">{t('header.title')}</h1>
+                  <p className="text-sm text-gray-400">{t('header.subtitle')}</p>
                 </div>
               </div>
               {user ? (
@@ -1694,7 +1695,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                   <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-white">✕</button>
                 </div>
               ) : (
-                <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">Sign In</button>
+                <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">{t('auth.signIn')}</button>
               )}
               {onBackToLanding && (
                 <button onClick={onBackToLanding} className="flex items-center gap-1 px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition" title={t('header.backToSite')}>
@@ -1740,8 +1741,8 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                 <Search className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold">Property Check</h1>
-                <p className="text-sm text-gray-400">Global Real Estate Investment Analysis</p>
+                <h1 className="text-xl sm:text-2xl font-bold">{t('header.title')}</h1>
+                <p className="text-sm text-gray-400">{t('header.subtitle')}</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
@@ -1751,7 +1752,7 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                   <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-white">✕</button>
                 </div>
               ) : (
-                <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">Sign In</button>
+                <button onClick={() => setShowAuthModal(true)} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">{t('auth.signIn')}</button>
               )}
               {onBackToLanding && (
                 <button onClick={onBackToLanding} className="flex items-center gap-1 px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition" title={t('header.backToSite')}>

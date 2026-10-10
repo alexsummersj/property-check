@@ -12,7 +12,7 @@
 | Domains | `property-check.com`, `www.property-check.com` (DNS A/CNAME → `167.71.49.80`) |
 | TLS | Let's Encrypt via certbot, HTTP→HTTPS redirect |
 | Secrets | `/var/www/property-check/.env` (`ANTHROPIC_API_KEY`, `JWT_SECRET`) |
-| Data | `/var/www/property-check/users.json`, `quotas.json`, `properties.json`, `analyzes.json` — backed up daily |
+| Data | `/var/www/property-check/users.json`, `quotas.json`, `properties.json`, `analyzes.json`, `shares.json` — backed up daily |
 
 > Note: production was migrated from the old DigitalOcean droplet `174.138.28.202`
 > (Oct 2026). Access to the old droplet is lost and it is considered abandoned —
@@ -173,3 +173,29 @@ ssh root@SERVER /usr/local/bin/pc-drill.sh
 ```
 Suggested cron (once a week, Sunday 04:40 UTC): `40 4 * * 0 root /usr/local/bin/pc-drill.sh > /var/log/pc-drill.log 2>&1`.
 `PORT` became an environment variable (`process.env.PORT || 3001`) exactly so this drill can run next to production.
+
+## Deploy v3.5 note (public share links)
+
+New data file `shares.json` and new endpoints `POST /api/share`, `GET /api/share/<id>`, `DELETE /api/share/<id>`.
+No new npm deps. `PORT` is read from the environment (`process.env.PORT || 3001`); PM2 has no `PORT` set, so the
+service keeps answering on 3001. The global `/api` limiter went from 60 to 120 requests/min per IP.
+
+```bash
+cd /var/www/property-check
+git pull --ff-only
+cd frontend && npm run build && cd ..
+pm2 restart property-check --update-env
+curl -s localhost:3001/api/health
+SMOKE_DATA_DIR=/var/www/property-check node tests/smoke.mjs
+```
+
+Update the backup script once so `shares.json` is archived (it already skips files that are not there yet),
+uploading with LF endings:
+
+```bash
+scp pc-backup.sh root@SERVER:/usr/local/bin/pc-backup.sh
+ssh root@SERVER "tr -d '\r' < /usr/local/bin/pc-backup.sh > /tmp/pb && mv /tmp/pb /usr/local/bin/pc-backup.sh && chmod +x /usr/local/bin/pc-backup.sh && /usr/local/bin/pc-backup.sh && tar tzf /root/backups/pc-data-$(date +%F).tar.gz"
+```
+
+Rollback: `git reset --hard a2a188e` (before share links) + rebuild + restart. `shares.json` is additive — old builds
+ignore it, and already sent links answer 404 until the code is back.

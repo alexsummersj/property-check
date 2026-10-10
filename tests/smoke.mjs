@@ -31,7 +31,7 @@ const req = async (path, { method = 'GET', body, token, clientId, retryOn429 = t
       body: body === undefined ? undefined : JSON.stringify(body)
     });
     const parsed = await r.json().catch(() => ({}));
-    // На /api висит общий лимит 60 запросов/мин на IP, а набор делает ~35 запросов подряд:
+    // На /api висит общий лимит 120 запросов/мин на IP, а набор делает ~50 запросов подряд:
     // при повторном прогоне можно упереться в него и получить ложный FAIL, поэтому подождать и повторить
     if (r.status === 429 && retryOn429 && attempt < 4) {
       await new Promise((resolve) => setTimeout(resolve, 12000));
@@ -119,6 +119,46 @@ const main = async () => {
   check('DELETE /api/analyzes/:propertyId', r.status === 200);
   r = await req('/api/analyzes', { token });
   check('deleting a property removes its reports', r.status === 200 && (!r.body.analyzes || r.body.analyzes[PROP] === undefined));
+
+  // ---- публичные ссылки на отчёт ----
+  r = await req('/api/analyzes', { method: 'PUT', token, body: { propertyId: PROP, mode: 'overview', text: 'Shared report body', language: 'en' } });
+  check('saved a report before sharing', r.status === 200);
+
+  r = await req('/api/share', { method: 'POST', body: { propertyId: PROP, mode: 'overview' } });
+  check('POST /api/share needs an owner', r.status === 400);
+  r = await req('/api/share', { method: 'POST', token, body: { propertyId: PROP, mode: 'wrong mode' } });
+  check('POST /api/share rejects an invalid mode', r.status === 400);
+  r = await req('/api/share', { method: 'POST', token, body: { propertyId: 'nope-' + Date.now(), mode: 'overview' } });
+  check('POST /api/share rejects a property with no saved report', r.status === 404);
+
+  r = await req('/api/share', { method: 'POST', token, body: { propertyId: PROP, mode: 'overview' } });
+  check('POST /api/share creates a link', r.status === 200 && /^[A-Za-z0-9]{10}$/.test(r.body.id || ''));
+  const shareId = r.body.id;
+
+  r = await req('/api/share', { method: 'POST', token, body: { propertyId: PROP, mode: 'overview' } });
+  check('sharing the same report again reuses the link', r.status === 200 && r.body.id === shareId && r.body.reused === true);
+
+  r = await req('/api/share/' + shareId);
+  const shared = r.body.share;
+  check('GET /api/share/:id works without auth', r.status === 200 && !!shared && shared.text === 'Shared report body' && shared.mode === 'overview');
+  check('shared report counts views', typeof (shared && shared.views) === 'number' && shared.views >= 1);
+  r = await req('/api/share/zzzzzzzzzz');
+  check('unknown share id is 404', r.status === 404);
+  r = await req('/api/share/bad--id');
+  check('malformed share id is 404', r.status === 404);
+  r = await req('/api/share/' + shareId, { method: 'DELETE', clientId: 'other' + Date.now() });
+  check('a stranger cannot revoke the link', r.status === 403);
+  r = await req('/api/share/' + shareId, { method: 'DELETE', token });
+  check('the owner can revoke the link', r.status === 200 && r.body.removed === 1);
+  r = await req('/api/share/' + shareId);
+  check('a revoked link stops working', r.status === 404);
+
+  r = await req('/api/share', { method: 'POST', token, body: { propertyId: PROP, mode: 'overview' } });
+  const secondShareId = r.body.id;
+  r = await req('/api/analyzes/' + PROP, { method: 'DELETE', token });
+  check('deleting the property revokes its links', r.status === 200 && r.body.revokedShares === 1);
+  r = await req('/api/share/' + secondShareId);
+  check('link of a deleted property is gone', r.status === 404);
 
   // ---- сброс пароля ----
   // лимит на сброс считается 15 минутами, ждать его бессмысленно — сразу SKIP

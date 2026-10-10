@@ -50,8 +50,10 @@ Style: concrete and quantitative, no filler, no generic investment advice, no ma
 // Сколько поисковых запросов разрешаем на один анализ
 const WEB_SEARCH_MAX_USES = parseInt(process.env.WEB_SEARCH_MAX_USES || '5');
 
-// Rate limiters — защита от абьюза и неконтролируемых затрат на API
-const apiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please slow down' } });
+// Rate limiters — защита от абьюза и неконтролируемых затрат на API.
+// Дешёвые эндпоинты держим щедро (120/мин): одна вкладка при загрузке делает несколько
+// синхронизаций свойств и отчётов подряд. Деньги тратят только AI-ручки — им хватает 20/мин.
+const apiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 120, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many requests, please slow down' } });
 const aiLimiter = rateLimit({ windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false, message: { error: 'Too many AI requests, please wait a minute' } });
 app.use('/api', apiLimiter);
 
@@ -1088,9 +1090,139 @@ app.delete('/api/analyzes/:propertyId', (req, res) => {
       if (Object.keys(owner).length === 0) delete all[key];
       saveAnalyzes(all);
     }
-    res.json({ success: true });
+    // Публичные ссылки этого объекта отзываем вместе с отчётом: удалённый объект не должен
+    // продолжать жить по отправленной ссылке
+    const shares = loadShares();
+    let revokedShares = 0;
+    for (const sid of Object.keys(shares)) {
+      if (shares[sid].owner === key && shares[sid].propertyId === req.params.propertyId) { delete shares[sid]; revokedShares++; }
+    }
+    if (revokedShares) saveShares(shares);
+    res.json({ success: true, revokedShares });
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete analyzes' });
+  }
+});
+
+// ===== Публичные ссылки на анализ =====
+// Отчёт можно отправить клиенту ссылкой без регистрации. В shares.json кладём СНИМОК
+// отчёта (текст + название объекта), а не ссылку на запись: так ссылка не ломается,
+// когда отчёт пересоздают. Повторный запрос для той же пары объект+режим возвращает
+// прежний id со свежим текстом — отправленная ранее ссылка просто обновится.
+const SHARES_FILE = './shares.json';
+const SHARE_ID_ALPHABET = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // без похожих символов (0/O, 1/l)
+const MAX_SHARES_PER_OWNER = 100;
+
+const loadShares = () => {
+  try {
+    if (fs.existsSync(SHARES_FILE)) return JSON.parse(fs.readFileSync(SHARES_FILE, 'utf8'));
+  } catch (e) {}
+  return {};
+};
+const saveShares = (s) => atomicWrite(SHARES_FILE, JSON.stringify(s));
+
+const newShareId = () => {
+  let id = '';
+  for (let i = 0; i < 10; i++) id += SHARE_ID_ALPHABET[crypto.randomInt(SHARE_ID_ALPHABET.length)];
+  return id;
+};
+
+// Создать (или обновить) публичную ссылку на сохранённый отчёт
+app.post('/api/share', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    if (!key) return res.status(400).json({ error: 'Sign in or send X-Client-Id to create a share link' });
+
+    const { propertyId, mode } = req.body || {};
+    const pid = String(propertyId === undefined || propertyId === null ? '' : propertyId).slice(0, 64);
+    const modeKey = String(mode || 'overview').slice(0, 20);
+    if (!pid) return res.status(400).json({ error: 'propertyId is required' });
+    if (!/^[A-Za-z][A-Za-z0-9_-]{0,19}$/.test(modeKey)) return res.status(400).json({ error: 'Invalid mode' });
+
+    const analyzes = loadAnalyzes();
+    const entry = analyzes[key] && analyzes[key][pid] && analyzes[key][pid][modeKey];
+    if (!entry) return res.status(404).json({ error: 'Nothing is saved for this property and mode yet' });
+
+    const list = (loadProperties() || {})[key] || [];
+    const prop = list.find(p => String(p.id) === pid) || {};
+    const title = String(prop.name || prop.title || '').slice(0, 160);
+    const location = String(prop.location || '').slice(0, 160);
+
+    const shares = loadShares();
+    const existingId = Object.keys(shares).find(sid => shares[sid].owner === key && shares[sid].propertyId === pid && shares[sid].mode === modeKey);
+    if (!existingId && Object.values(shares).filter(s => s.owner === key).length >= MAX_SHARES_PER_OWNER) {
+      return res.status(400).json({ error: `Too many shared links (max ${MAX_SHARES_PER_OWNER})` });
+    }
+
+    const id = existingId || newShareId();
+    const previous = shares[id] || {};
+    shares[id] = {
+      owner: key,
+      propertyId: pid,
+      mode: modeKey,
+      title: title || null,
+      location: location || null,
+      language: entry.language || null,
+      question: entry.question || null,
+      text: entry.text,
+      savedAt: entry.createdAt || null,
+      createdAt: previous.createdAt || new Date().toISOString(),
+      views: previous.views || 0
+    };
+    saveShares(shares);
+    res.json({ success: true, id, hash: `#a/${id}`, reused: !!existingId });
+  } catch (e) {
+    console.error('Share create error:', e);
+    res.status(500).json({ error: 'Failed to create share link' });
+  }
+});
+
+// Открыть отчёт по ссылке — без авторизации
+app.get('/api/share/:id', (req, res) => {
+  try {
+    const id = String(req.params.id || '');
+    if (!new RegExp(`^[${SHARE_ID_ALPHABET}]{6,20}$`).test(id)) return res.status(404).json({ error: 'Link not found' });
+    const shares = loadShares();
+    const s = shares[id];
+    if (!s) return res.status(404).json({ error: 'Link not found' });
+
+    s.views = (s.views || 0) + 1;
+    saveShares(shares); // счётчик просмотров — полезная обратная связь для брокера
+
+    res.json({
+      share: {
+        id,
+        title: s.title,
+        location: s.location,
+        mode: s.mode,
+        language: s.language,
+        question: s.question,
+        text: s.text,
+        savedAt: s.savedAt,
+        views: s.views
+      }
+    });
+  } catch (e) {
+    console.error('Share read error:', e);
+    res.status(500).json({ error: 'Failed to load shared report' });
+  }
+});
+
+// Отозвать ссылку (может только владелец)
+app.delete('/api/share/:id', (req, res) => {
+  try {
+    const key = ownerKey(req);
+    const id = String(req.params.id || '');
+    const shares = loadShares();
+    const s = shares[id];
+    if (!s) return res.json({ success: true, removed: 0 });
+    if (!key || s.owner !== key) return res.status(403).json({ error: 'Not your link' });
+    delete shares[id];
+    saveShares(shares);
+    res.json({ success: true, removed: 1 });
+  } catch (e) {
+    console.error('Share delete error:', e);
+    res.status(500).json({ error: 'Failed to revoke share link' });
   }
 });
 

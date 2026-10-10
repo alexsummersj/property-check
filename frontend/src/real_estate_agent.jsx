@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
-import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download } from 'lucide-react';
+import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download, Share2 } from 'lucide-react';
 import { translations, languages, getTranslation } from './i18n';
 import MarkdownLite from './MarkdownLite';
 
@@ -1507,6 +1507,44 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
+  // Публичная ссылка на текущий отчёт: сервер кладёт снимок текста в shares.json,
+  // поэтому открыть её может кто угодно, без входа в аккаунт.
+  // Здесь намеренно selectedProperty, а не currentProperty — вторая объявлена ниже по телу.
+  const [shareState, setShareState] = useState(null); // { key, url }
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+  const shareKey = `${selectedProperty ? selectedProperty.id : ''}:${analysisInfo ? analysisInfo.mode : ''}`;
+  const shareUrl = shareState && shareState.key === shareKey ? shareState.url : '';
+
+  const shareAnalysis = async () => {
+    if (!analysis || !selectedProperty || !analysisInfo || !analysisInfo.mode) return;
+    setShareBusy(true);
+    try {
+      const r = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader(), 'X-Client-Id': getClientId() },
+        body: JSON.stringify({ propertyId: selectedProperty.id, mode: analysisInfo.mode })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.id) { setError(d.error || 'Could not create the link'); return; }
+      setShareState({ key: shareKey, url: `${window.location.origin}/#a/${d.id}` });
+      setShareCopied(false);
+    } catch {
+      setError('Connection error. Please try again.');
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    } catch {}
+  };
+
   const formatSavedDate = (iso) => {
     try { return new Date(iso).toLocaleDateString(language, { day: 'numeric', month: 'short', year: 'numeric' }); } catch { return ''; }
   };
@@ -1944,7 +1982,26 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                       <Download className="w-3.5 h-3.5" />
                       {t('analysis.download')}
                     </button>
+                    <button
+                      onClick={shareAnalysis}
+                      disabled={shareBusy}
+                      title={t('analysis.shareHint')}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition disabled:opacity-50"
+                    >
+                      {shareBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Share2 className="w-3.5 h-3.5" />}
+                      {shareUrl ? t('analysis.shareAgain') : t('analysis.share')}
+                    </button>
                   </div>
+                </div>
+              )}
+
+              {shareUrl && (
+                <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-blue-300 shrink-0">{t('analysis.shareReady')}</span>
+                  <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} className="flex-1 min-w-[220px] px-3 py-2 text-xs bg-white/10 border border-white/20 rounded-lg font-mono" />
+                  <button onClick={copyShareLink} className="px-3 py-2 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                    {shareCopied ? t('analysis.copied') : t('analysis.copy')}
+                  </button>
                 </div>
               )}
 

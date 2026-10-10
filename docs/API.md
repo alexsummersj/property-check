@@ -165,3 +165,19 @@ Analysis output and storage:
 - The client saves a report after a successful stream (or after the user presses Stop), keeps a localStorage copy (`real_estate_analyzes`), and restores the newest saved report of the selected property — previously one global `analysis` state leaked the text of the previously selected property and was lost on reload.
 - Results header shows the mode, the saved date and the custom question, plus "Copy" and "Markdown" (download `.md`) buttons.
 - Mode buttons (Overview / News / Growth / Risks / Regions / Timeline) no longer hit Claude on every click: if the report of that property and mode is already saved, the button opens it instantly (green dot + saved date on the button, "Saved report" chip in the results header). Regeneration is explicit — the "Regenerate" button next to the results is the only control that spends an analysis for an already generated mode. Switching between modes keeps every report, they are stored per property + mode.
+
+## Revision v3.4 (API smoke tests)
+
+- `tests/smoke.mjs` (npm `test:smoke`) covers health, auth, quota, properties, saved analyses, share links and password reset — ~50 checks, no Claude calls. CI starts `node server.js` with a dummy key on `PORT=3101` and runs the suite against it; it can also be run against production (`SMOKE_DATA_DIR=/var/www/property-check node tests/smoke.mjs`).
+- Global `/api` limiter raised from 60 to **120 requests/min per IP** (one page load performs several syncs); AI endpoints keep their own 20/min, because those are the ones that cost money.
+
+## Revision v3.5 (public share links)
+
+A saved report can be published as a link a broker sends to a client — opening it needs no account.
+
+- `POST /api/share` — `{ propertyId, mode }` for the current owner (JWT → `user:<id>`, anonymous → `cid:<X-Client-Id>`). It snapshots the **saved** report: `404` when nothing is saved for that property + mode, `400` on a missing owner or bad mode. Returns `{ success, id, hash: "#a/<id>", reused }`. Calling it again for the same property + mode returns the same `id` with a fresh snapshot, so an already sent link starts showing the new text. Max 100 links per owner.
+- `GET /api/share/<id>` — public, no auth: `{ share: { id, title, location, mode, language, question, text, savedAt, views } }`. `title` and `location` come from the property card at snapshot time; `views` increments on every read; unknown or malformed ids give `404`.
+- `DELETE /api/share/<id>` — revoke. Only the owner may do it (`403` for anyone else, including another anonymous client); unknown ids are idempotent.
+- `DELETE /api/analyzes/<propertyId>` also revokes the links of that property and answers `{ success, revokedShares }`.
+- Storage: `shares.json` (atomic writes, included in the daily backup) keeps a **snapshot** of the text, not a pointer — the link survives report regeneration, and nothing but name and location of the property card leaks.
+- Frontend: the "Share" button in the results header creates the link and shows it ready to copy. The public page `https://property-check.com/#a/<id>` (`SharedReport.jsx`) renders the report with the property header, mode chip, saved date, view counter and an "Analyze my property" call to action. Its language follows the report (`language` stored with the analysis), otherwise the browser language; untranslated keys fall back to English.

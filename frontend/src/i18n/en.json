@@ -77,7 +77,20 @@
     "copy": "Copy",
     "copied": "Copied",
     "download": "Markdown",
-    "selectAnalysis": "Select analysis type"
+    "selectAnalysis": "Select analysis type",
+    "share": "Share",
+    "shareAgain": "Link again",
+    "shareHint": "Create a public link — anyone with it can read this report, no sign-in needed",
+    "shareReady": "Public link — works until the property is deleted"
+  },
+  "shared": {
+    "title": "Property analysis",
+    "subtitle": "Report shared from property-check.com",
+    "loading": "Loading report...",
+    "notFound": "This link is no longer available — the report was deleted or revoked.",
+    "untitled": "Real estate object",
+    "footer": "Want an analysis of your own property? Upload its documents — it takes a minute.",
+    "analyzeYours": "Analyze my property"
   },
   "stats": {
     "cost": "Cost",

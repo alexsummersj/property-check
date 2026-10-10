@@ -142,5 +142,133 @@
     "location": "Lokalita",
     "type": "Typ",
     "area": "Plocha"
+  },
+  "landing": {
+    "nav": {
+      "features": "Funkce",
+      "how": "Jak to funguje",
+      "pricing": "Ceny",
+      "tryFree": "Vyzkouset"
+    },
+    "hero": {
+      "badge": "Pohanenene AI Claude",
+      "title1": "Analyzujte jakoukoli nemovitost",
+      "title2": "behema nekolika vterin",
+      "subtitle": "Nahrajte dokumenty o nemovitosti, ziskejte okamzitou analyzu rizik pomoci AI a rozhodujte se chytreji po celem svete.",
+      "ctaPrimary": "Zacit s bezplatnou analyzou",
+      "ctaDemo": "Prehrat demo"
+    },
+    "stats": {
+      "s1": "Analyzovanych nemovitosti",
+      "s2": "Zemdi pokryti",
+      "s3": "Jazyku",
+      "s4": "Presnost"
+    },
+    "demo": {
+      "villa": "Luxusni vila",
+      "lowRisk": "Nizke riziko",
+      "investment": "Investice",
+      "location": "Palm Jumeirah, Dubaj",
+      "price": "Cena",
+      "priceValue": "8,5 mil. AED",
+      "riskScore": "Skore rizika",
+      "aiAnalysis": "AI analyza",
+      "pro1": "Zavedeny razitel",
+      "pro2": "Skvela lokalita",
+      "warn": "Cena v prumeru trhu"
+    },
+    "features": {
+      "title1": "Vse, co potrebujete",
+      "title2": "pro jiste investovani",
+      "subtitle": "Vykonne nastroje AI pro soucasne investory do nemovitosti",
+      "i1title": "Analyza PDF pomoci AI",
+      "i1desc": "Nahrajte jakykoli dokument o nemovitosti - AI extrahuje vsechna klicova data behem vterin",
+      "i2title": "Hodnoceni rizik",
+      "i2desc": "Okamzita skore rizika na zaklade historie razitele, lokality a trendu trhu",
+      "i3title": "Globalni pokryti",
+      "i3desc": "Funguje s nemovitostmi po celem svete - Dubaj, London, New York a dalsi",
+      "i4title": "Investicni prehledy",
+      "i4desc": "Analyzy od AI o potencielu rustu, srovnani trhu a casovani vstupu"
+    },
+    "how": {
+      "title": "Jak to funguje",
+      "subtitle": "Od dokumentu k poznatkum ve trech jednoduchych krocich",
+      "s1title": "Nahrajte dokumenty",
+      "s1desc": "Vlozte PDF dokumenty nemovitosti - katalogy, smlouvy nebo inzeraty",
+      "s2title": "Analyza AI",
+      "s2desc": "AI extrahuje data a analyzuje investicni potencial",
+      "s3title": "Ziskejte poznatky",
+      "s3desc": "Skore rizika, doporuceni a analyza trhu"
+    },
+    "testimonials": {
+      "title": "Oblibene u investoru",
+      "subtitle": "Co rikaji nasi uzivatele",
+      "t1text": "Konecne nastroj, ktery vyzkum nemovitosti robi bezproblemovym. Usetril mi tydny due diligence.",
+      "t1author": "Sarah M.",
+      "t1role": "Investorka do nemovitosti",
+      "t2text": "Samotne hodnoceni rizik stoji za to - uchrnilo me spatne investice.",
+      "t2author": "James K.",
+      "t2role": "Manager portfolia",
+      "t3text": "Multilingualni podpora menisi pravidla pro mezinarodni investice do nemovitosti.",
+      "t3author": "Ahmed R.",
+      "t3role": "Razitel nemovitosti"
+    },
+    "pricing": {
+      "title": "Jednoduche a transparentni ceny",
+      "subtitle": "Zacnete zadarmo, vyss prejdete az kdyz budete potrebovat vic",
+      "popular": "Nejoblibenejsi",
+      "free": "Zdarma",
+      "freePrice": "$0",
+      "freePeriod": "navzdy",
+      "freeCta": "Zacit",
+      "f1": "5 analyz nemovitosti mesicne",
+      "f2": "Zkladni hodnoceni rizik",
+      "f3": "Zpracovani PDF dokumentu",
+      "f4": "3 jazyky",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/mesic",
+      "proCta": "Zacit bezplatnou zkousku",
+      "p1": "Neomezene analyzy",
+      "p2": "Pokrocile skore rizik",
+      "p3": "Prioritni zpracovani AI",
+      "p4": "Vsechnych 13 jazyku",
+      "p5": "Export prehledu",
+      "p6": "Podpora pomoci e-mailu",
+      "ent": "Enterprise",
+      "entPrice": "Na miru",
+      "entCta": "Kontaktovat obchod",
+      "e1": "Vse z tarifu Pro",
+      "e2": "Prístup k API",
+      "e3": "Vlastni integrace",
+      "e4": "Dedikovana podpora",
+      "e5": "Spoluprace tymu",
+      "e6": "Moznost white-label"
+    },
+    "cta": {
+      "title1": "Pripraveni delat chytrejsi",
+      "title2": "investicni rozhodnuti?",
+      "subtitle": "Pridejte k tysicum investoru, kteri pomoci AI analyzuji nemovitosti po celem svete.",
+      "button": "Zacit - je to zadarmo",
+      "note": "Bez kreditni karty"
+    },
+    "footer": {
+      "privacy": "Zasady ochrany osobnich udaju",
+      "terms": "Podminky pouzivani",
+      "contact": "Kontakt",
+      "rights": "© {year} Property Check. Vsechna prava vyhrazena."
+    },
+    "legal": {
+      "privacyTitle": "Zasady ochrany osobnich udaju",
+      "privacy1": "Uchovavame jen minimum potrebne k provozu sluzby: vase jmeno a e-mail, bcrypt hash hesla, prideane nemovitosti a pocet provedenych analyz.",
+      "privacy2": "Nahrané dokumenty o nemovitosti posilame spolecnosti Anthropic (Claude API) pro extrakci dat a vytvoreni analyzy. Vase data neprodavame.",
+      "privacy3": "Seznam vasich nemovitosti se take ulozka do prohlizece (localStorage) a na nas server, takze po prihlaseni ho muzete pouzivat i na jinem zarizeni.",
+      "privacy4": "Pisemna zadost na hello@property-check.com - a vas ucet se vsemi daty je smazan.",
+      "termsTitle": "Podminky pouzivani",
+      "terms1": "Property Check je vyzkumny asistent pohaneneny AI. Poskytuje informace, nikoli financni, pravni ci dane poradenstvi, a nejde o licencovane oceneni.",
+      "terms2": "Trzni udaje jsou odhady z otevrenych zdroju a mohou byt zastarale - pred podpisem je vzdy overte proti transakcim DLD a smlouve SPA.",
+      "terms3": "Sluzba je poskytovana „jak je“. Neodpovidame za investicni rozhodnuti ucinedna na zaklade analyzy.",
+      "terms4": "Behem bety maji registrovaní uzivatele neomezene analyzy; anonymni uzivatele maji omezeny pocet na zarizeni."
+    }
   }
 }

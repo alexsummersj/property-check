@@ -189,3 +189,12 @@ A saved report can be published as a link a broker sends to a client — opening
 - `frontend/scripts/check-i18n.mjs` (npm `i18n:check`) compares every dictionary with `en.json` and exits non-zero on a missing or extra key; CI runs it before `npm run build`. This is what caught `header.backToSite` and `analysis.stop`, which had silently fallen back to English in 11 languages since v3.2.
 - Production bundle grew from 318 kB to 350 kB (98.9 kB → 109.7 kB gzipped) because the previously missing translations are now inlined.
 
+## Revision v3.7 (landing page i18n, all 13 languages)
+
+- `LandingPage.jsx` has no hard-coded English left: navigation, hero, the hero mock, stats, features, steps, testimonials, pricing, the final CTA, the footer and the privacy/terms modals all read from `landing.*` — 104 more keys, so every dictionary now carries 224.
+- Language state, `useT` and the flag dropdown moved out of `real_estate_agent.jsx` into `frontend/src/i18n/LanguageContext.jsx`. `App.jsx` wraps every view in `LanguageProvider`, so the landing, the app and the public share page share one language; the switcher is now reachable from the landing (desktop nav and mobile menu).
+- The chosen language is still stored under `real_estate_language`, so a visitor who picks Русский on the landing lands in a Russian app. On a first visit `detectLanguage()` uses the browser language, and `document.documentElement` gets both `dir` (rtl for Arabic) and `lang` on every screen — before, RTL was only applied inside the app.
+- `getTranslation(lang, path, params)` interpolates `{placeholders}` (used for the year in `landing.footer.rights`).
+- Landing anchors `#features`, `#how-it-works`, `#pricing` are now recognized by the hash router; previously a signed-in user clicking one was thrown into the app.
+- Translations are machine made: `ru/ar/zh/ja/fr/es/de/it` are idiomatic, `th` follows the existing Thai file, `cs/kk/ka` follow the Latin-transliteration convention of this repo. All of them still worth a native proofread.
+

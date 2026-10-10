@@ -142,5 +142,133 @@
     "location": "Mdebareoba",
     "type": "Tipi",
     "area": "Fartobi"
+  },
+  "landing": {
+    "nav": {
+      "features": "Vosoblobebi",
+      "how": "Rog mudavshevs",
+      "pricing": "Fasebi",
+      "tryFree": "Ufasod gamosincade"
+    },
+    "hero": {
+      "badge": "Claude AI-s bazaaze",
+      "title1": "Gaianalizebet narmi objectis",
+      "title2": "rames watshshi",
+      "subtitle": "Chaitaniet objectis dokumentebi — miigebs AI-ze damyvanul riskebis analizebs da mitum gadasckhvitebebs mnivalfar mkhloshi.",
+      "ctaPrimary": "Dapirki ufaso analizi",
+      "ctaDemo": "Naxe demo"
+    },
+    "stats": {
+      "s1": "Analizebuli objectebi",
+      "s2": "Dafrkhili farvnebi",
+      "s3": "Ena",
+      "s4": "Zustoba"
+    },
+    "demo": {
+      "villa": "Luxusu villa",
+      "lowRisk": "Tsiri riski",
+      "investment": "investicia",
+      "location": "Palm Jumeirah, Dubay",
+      "price": "Fasi",
+      "priceValue": "8,5 mln AED",
+      "riskScore": "Riskebis kauroba",
+      "aiAnalysis": "AI analizi",
+      "pro1": "Damkvidarebuli dveloperi",
+      "pro2": "Kargi lokacia",
+      "warn": "Bazris saShualo fasi"
+    },
+    "features": {
+      "title1": "Yvelafers, rac ginda",
+      "title2": "damnishnebit investiriisa",
+      "subtitle": "Zalis uZlieri AI instrumentebi tanamedrove udzravi konebis investorisa",
+      "i1title": "PDF analizi AI-s mitxovt",
+      "i1desc": "Chaitaniet objectis narmi dokumenti — AI amoghebs yvela dzirvadeul monacemes ramedene wameeishi",
+      "i2title": "Riskebis shetzeva",
+      "i2desc": "Makve riskis kauroebi shpromptad — dveloperis istoriis, lokaciisa da bazris trendebze dadghna",
+      "i3title": "Globaluri fazofari",
+      "i3desc": "Muobs objectebaze mnivalfar — Dubay, London, Niu-Iorki da meti",
+      "i4title": "Investiciuri gagebrebi",
+      "i4desc": "AI-mi sheqmili analizi zrdis potensialze, bazris sheadarebasa da droaze"
+    },
+    "how": {
+      "title": "Rog mudavshevs",
+      "subtitle": "Dokumentidan gagebamde sam martiv nabadad",
+      "s1title": "Chaitaniet dokumentebi",
+      "s1desc": "Mivleot objectis PDF filebi — broshyurebi, xelshemokleasebi an reveburebi",
+      "s2title": "AI analizi",
+      "s2desc": "AI amoghebs monacemebas analizirs investiciur potencials",
+      "s3title": "Miige gatavdebul gagebreebs",
+      "s3desc": "Riskis kauroebi, rekomebdaseba da bazris analizi"
+    },
+    "testimonials": {
+      "title": "Investorebs uvariat",
+      "subtitle": "Ras ambebs cheni modzraobebsani",
+      "t1text": "Sabolshio! Instrumentma udzravi konebis kvleva martiv gadadxada — ramdenime kvira damzvuna due diligence-shi.",
+      "t1author": "Sara M.",
+      "t1role": "Udzravi konebis investori",
+      "t2text": "Riskebis shetzevis funkcia cxirs ertadjer jirs — damicava crobi investiciisgan.",
+      "t2author": "Jemsi K.",
+      "t2role": "Portfelis menedjeri",
+      "t3text": "Rakmultilingvuri mkaprtloba gamomkelilia saertashoriso udzravi investiciebis.",
+      "t3author": "Axmedi R.",
+      "t3role": "Udzravi konebis mopaturapire"
+    },
+    "pricing": {
+      "title": "Martivi gamovlini fasebi",
+      "subtitle": "Dapirki ufasod, gaajare roca meti ginda",
+      "popular": "Popolaruli",
+      "free": "Ufaso",
+      "freePrice": "$0",
+      "freePeriod": "murdis",
+      "freeCta": "Dapirki",
+      "f1": "TveShi 5 objectis analizi",
+      "f2": "Riskis sadgzis shetzeva",
+      "f3": "PDF dokumentebis damuSaveba",
+      "f4": "3 ena",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/tveShi",
+      "proCta": "Ufaso sinadzis dawoeba",
+      "p1": "ShesazRudrebeli analizebi",
+      "p2": "Gaurtvebuli riskis kauroebi",
+      "p3": "AI damuSavebis pirveloba",
+      "p4": "yvela 13 ena",
+      "p5": "Angarishebis eksportireba",
+      "p6": "Mkharedobeloba email-ze",
+      "ent": "Korporaciuli",
+      "entPrice": "Cilihuri",
+      "entCta": "Dakavshiride gadasachmeli",
+      "e1": "yvela Pro-shi arsebuli",
+      "e2": "API shesazRudreloba",
+      "e3": "Cilihuri integraciebi",
+      "e4": "ZRieri mkaprtloba",
+      "e5": "Gundis shetanaoba",
+      "e6": "White-label varii"
+    },
+    "cta": {
+      "title1": "Mzad xar, miige mitum",
+      "title2": "investiciuri gadasckhvitebebi?",
+      "subtitle": "Shemiyartsi afzuli investorvs, vinec AI-s mitxovt analizirs objectebs mnivalfar.",
+      "button": "Dapirki — ufasoa",
+      "note": "U sakredito kartisa"
+    },
+    "footer": {
+      "privacy": "Piradi gakvrevlebis politika",
+      "terms": "Moxmarebis pirobebi",
+      "contact": "Kavshiri",
+      "rights": "© {year} Property Check. yvela ufleba daculilia."
+    },
+    "legal": {
+      "privacyTitle": "Piradi gakvrevlebis politika",
+      "privacy1": "VinakavT minimums, racac momsaxureblobas surs: saxeli da email, parolis bcrypt hash, damatebuli objectebi da gaertvebuli analizebis raodenoba.",
+      "privacy2": "Objectis dokumentebi, racac vitanavT, monacemebis amoghebasa da analizeis shegenad Anthropic-mi (Claude API) igzavnia. Chver monacemebas vikhdit.",
+      "privacy3": "Tvis objectebis sighi brovsershi (localStorage) da chven servrsh sakavrdeba — shemdegad, sxva moqanulshac shesvla-shemdgomad xelkhashi miigtavT.",
+      "privacy4": "Monishvnil modzraoba hello@property-check.com-m — da tvis akant yvela monacemi daishleba.",
+      "termsTitle": "Moxmarebis pirobebi",
+      "terms1": "Property Check AI mokvleuri instrumentia. Ityodebs informacias, ara finansur, iuridiul an sabajro konsultatsias, da ar aris litsenziebi shedgheba.",
+      "terms2": "Bazris rakhavebi dzirad jrnili wbroebidan she debia da shesazloa gamotvirdebuli — xelmoweramde amoyamolot DLD gamotanebisa da SPA-xelshemokleasebi.",
+      "terms3": "Momsaxurebloba yofila «rogor aris». Chver ver vipirdebT analizeze fukhnbav investiciur gadasckhvitebebis.",
+      "terms4": "Beta periodebshi darchenuli modzraobebs shesazRudrebeli analizebi aqvt; anonimur modzraobebs moxenuli raodenoba moqvtT moqanulze."
+    }
   }
 }

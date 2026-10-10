@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download, Share2 } from 'lucide-react';
-import { translations, languages, getTranslation } from './i18n';
+import { useLanguage, useT } from './i18n/LanguageContext';
 import MarkdownLite from './MarkdownLite';
 
 // Auth constants
@@ -182,86 +182,6 @@ const formatArea = (size, location, sizeUnits) => {
   }
   
   return `${size} sqft`;
-};
-
-// Language Context
-const LanguageContext = createContext();
-
-const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (!context) throw new Error('useLanguage must be used within LanguageProvider');
-  return context;
-};
-
-const useT = () => {
-  const { language } = useLanguage();
-  return (path) => getTranslation(language, path);
-};
-
-// Language Selector Component with Flag Images
-const LanguageSelector = () => {
-  const { language, setLanguage } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const currentLang = languages.find(l => l.code === language) || languages[0];
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const FlagImg = ({ country, size = 20 }) => (
-    <img 
-      src={`https://flagcdn.com/w${size}/${country}.png`}
-      srcSet={`https://flagcdn.com/w${size * 2}/${country}.png 2x`}
-      width={size}
-      alt=""
-      className="rounded-sm shadow-sm"
-      style={{ minWidth: size }}
-    />
-  );
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition"
-      >
-        <FlagImg country={currentLang.country} size={20} />
-        <span className="text-sm font-medium hidden sm:inline">{currentLang.name}</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-52 bg-slate-800 border border-white/20 rounded-xl shadow-xl z-[100] overflow-hidden max-h-[400px] overflow-y-auto">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => {
-                setLanguage(lang.code);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition text-left ${
-                language === lang.code ? 'bg-blue-500/20' : ''
-              }`}
-            >
-              <FlagImg country={lang.country} size={24} />
-              <span className="text-sm">{lang.name}</span>
-              {language === lang.code && (
-                <Check className="w-4 h-4 text-blue-400 ml-auto" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 };
 
 const STORAGE_KEYS = {
@@ -2024,31 +1944,5 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
   );
 };
 
-// Main Component with Language Provider
-const RealEstateAgent = ({ onBackToLanding }) => {
-  const [language, setLanguage] = useState(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'en';
-    } catch { return 'en'; }
-  });
-
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEYS.LANGUAGE, language); } catch {}
-
-    // Set RTL for Arabic
-    const currentLang = languages.find(l => l.code === language);
-    if (currentLang?.rtl) {
-      document.documentElement.setAttribute('dir', 'rtl');
-    } else {
-      document.documentElement.setAttribute('dir', 'ltr');
-    }
-  }, [language]);
-
-  return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
-      <RealEstateAgentContent onBackToLanding={onBackToLanding} />
-    </LanguageContext.Provider>
-  );
-};
-
-export default RealEstateAgent;
+// Язык даёт LanguageProvider, подключённый в App.jsx (i18n/LanguageContext.jsx)
+export default RealEstateAgentContent;

@@ -4,11 +4,13 @@ import {
   CheckCircle, ArrowRight, Star, Zap, BarChart3, Upload,
   ChevronRight, Play, Menu, X
 } from 'lucide-react';
+import { useT, LanguageSelector } from './i18n/LanguageContext';
 
 const LandingPage = ({ onEnterApp }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [legalDoc, setLegalDoc] = useState(null); // 'privacy' | 'terms'
+  const t = useT();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,138 +22,109 @@ const LandingPage = ({ onEnterApp }) => {
 
   const LEGAL = {
     privacy: {
-      title: 'Privacy Policy',
-      body: [
-        'We store the minimum needed to run the service: your name and email, a bcrypt hash of your password, the properties you add and the number of analyses you have run.',
-        'Property documents you upload are sent to Anthropic (Claude API) to extract data and generate analysis. We do not sell your data.',
-        'Your property list is also cached in your browser (localStorage) and kept on our server, so you can return on another device after signing in.',
-        'Written request to hello@property-check.com — and your account with all its data is deleted.'
-      ]
+      title: t('landing.legal.privacyTitle'),
+      body: [1, 2, 3, 4].map((i) => t(`landing.legal.privacy${i}`))
     },
     terms: {
-      title: 'Terms of Service',
-      body: [
-        'Property Check is an AI research assistant. It provides information, not financial, legal or tax advice, and is not a licensed valuation.',
-        'Market numbers are estimates collected from open sources and may be outdated — always verify them against DLD transactions and the SPA before signing.',
-        'The service is provided "as is". We are not responsible for investment decisions made on the basis of the analysis.',
-        'During the beta, registered users get unlimited analyses; anonymous users get a limited number per device.'
-      ]
+      title: t('landing.legal.termsTitle'),
+      body: [1, 2, 3, 4].map((i) => t(`landing.legal.terms${i}`))
     }
   };
 
   const features = [
     {
       icon: <Upload className="w-8 h-8" />,
-      title: "AI-Powered PDF Analysis",
-      description: "Upload any property document — our AI extracts all key data in seconds"
+      title: t('landing.features.i1title'),
+      description: t('landing.features.i1desc')
     },
     {
       icon: <Shield className="w-8 h-8" />,
-      title: "Risk Assessment",
-      description: "Get instant risk scores based on developer history, location, and market trends"
+      title: t('landing.features.i2title'),
+      description: t('landing.features.i2desc')
     },
     {
       icon: <Globe className="w-8 h-8" />,
-      title: "Global Coverage",
-      description: "Works with properties worldwide — Dubai, London, New York, and beyond"
+      title: t('landing.features.i3title'),
+      description: t('landing.features.i3desc')
     },
     {
       icon: <BarChart3 className="w-8 h-8" />,
-      title: "Investment Insights",
-      description: "AI-generated analysis on growth potential, market comparisons, and timing"
+      title: t('landing.features.i4title'),
+      description: t('landing.features.i4desc')
     }
   ];
 
   const steps = [
     {
       number: "01",
-      title: "Upload Documents",
-      description: "Drop your property PDFs — brochures, contracts, or listings"
+      title: t('landing.how.s1title'),
+      description: t('landing.how.s1desc')
     },
     {
       number: "02", 
-      title: "AI Analysis",
-      description: "Our AI extracts data and analyzes investment potential"
+      title: t('landing.how.s2title'),
+      description: t('landing.how.s2desc')
     },
     {
       number: "03",
-      title: "Get Insights",
-      description: "Receive risk scores, recommendations, and market analysis"
+      title: t('landing.how.s3title'),
+      description: t('landing.how.s3desc')
     }
   ];
 
   const testimonials = [
     {
-      text: "Finally, a tool that makes property research effortless. Saved me weeks of due diligence.",
-      author: "Sarah M.",
-      role: "Real Estate Investor",
+      text: t('landing.testimonials.t1text'),
+      author: t('landing.testimonials.t1author'),
+      role: t('landing.testimonials.t1role'),
       rating: 5
     },
     {
-      text: "The risk assessment feature alone is worth it. Helped me avoid a bad investment.",
-      author: "James K.",
-      role: "Portfolio Manager", 
+      text: t('landing.testimonials.t2text'),
+      author: t('landing.testimonials.t2author'),
+      role: t('landing.testimonials.t2role'),
       rating: 5
     },
     {
-      text: "Multilingual support is a game-changer for international property investing.",
-      author: "Ahmed R.",
-      role: "Property Developer",
+      text: t('landing.testimonials.t3text'),
+      author: t('landing.testimonials.t3author'),
+      role: t('landing.testimonials.t3role'),
       rating: 5
     }
   ];
 
   const pricingPlans = [
     {
-      name: "Free",
-      price: "$0",
-      period: "forever",
-      features: [
-        "5 property analyses/month",
-        "Basic risk assessment",
-        "PDF document parsing",
-        "3 languages"
-      ],
-      cta: "Get Started",
+      name: t('landing.pricing.free'),
+      price: t('landing.pricing.freePrice'),
+      period: t('landing.pricing.freePeriod'),
+      features: [1, 2, 3, 4].map((i) => t(`landing.pricing.f${i}`)),
+      cta: t('landing.pricing.freeCta'),
       popular: false
     },
     {
-      name: "Pro",
-      price: "$19",
-      period: "/month",
-      features: [
-        "Unlimited analyses",
-        "Advanced risk scoring",
-        "Priority AI processing",
-        "All 13 languages",
-        "Export reports",
-        "Email support"
-      ],
-      cta: "Start Free Trial",
+      name: t('landing.pricing.pro'),
+      price: t('landing.pricing.proPrice'),
+      period: t('landing.pricing.proPeriod'),
+      features: [1, 2, 3, 4, 5, 6].map((i) => t(`landing.pricing.p${i}`)),
+      cta: t('landing.pricing.proCta'),
       popular: true
     },
     {
-      name: "Enterprise",
-      price: "Custom",
+      name: t('landing.pricing.ent'),
+      price: t('landing.pricing.entPrice'),
       period: "",
-      features: [
-        "Everything in Pro",
-        "API access",
-        "Custom integrations",
-        "Dedicated support",
-        "Team collaboration",
-        "White-label option"
-      ],
-      cta: "Contact Sales",
+      features: [1, 2, 3, 4, 5, 6].map((i) => t(`landing.pricing.e${i}`)),
+      cta: t('landing.pricing.entCta'),
       popular: false
     }
   ];
 
   const stats = [
-    { value: "10K+", label: "Properties Analyzed" },
-    { value: "50+", label: "Countries Covered" },
-    { value: "13", label: "Languages" },
-    { value: "98%", label: "Accuracy Rate" }
+    { value: "10K+", label: t('landing.stats.s1') },
+    { value: "50+", label: t('landing.stats.s2') },
+    { value: "13", label: t('landing.stats.s3') },
+    { value: "98%", label: t('landing.stats.s4') }
   ];
 
   return (
@@ -171,17 +144,18 @@ const LandingPage = ({ onEnterApp }) => {
             
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-300 hover:text-white transition">Features</a>
-              <a href="#how-it-works" className="text-gray-300 hover:text-white transition">How it Works</a>
-              <a href="#pricing" className="text-gray-300 hover:text-white transition">Pricing</a>
+              <a href="#features" className="text-gray-300 hover:text-white transition">{t('landing.nav.features')}</a>
+              <a href="#how-it-works" className="text-gray-300 hover:text-white transition">{t('landing.nav.how')}</a>
+              <a href="#pricing" className="text-gray-300 hover:text-white transition">{t('landing.nav.pricing')}</a>
             </div>
 
             <div className="hidden md:flex items-center gap-4">
+              <LanguageSelector />
               <button 
                 onClick={onEnterApp}
                 className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl font-medium transition-all hover:shadow-lg hover:shadow-purple-500/25"
               >
-                Try Free
+                {t('landing.nav.tryFree')}
               </button>
             </div>
 
@@ -198,15 +172,16 @@ const LandingPage = ({ onEnterApp }) => {
           {mobileMenuOpen && (
             <div className="md:hidden mt-4 pb-4 border-t border-white/10 pt-4">
               <div className="flex flex-col gap-4">
-                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">Features</a>
-                <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">How it Works</a>
-                <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">Pricing</a>
+                <a href="#features" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">{t('landing.nav.features')}</a>
+                <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">{t('landing.nav.how')}</a>
+                <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-gray-300 hover:text-white transition">{t('landing.nav.pricing')}</a>
                 <button 
                   onClick={() => { setMobileMenuOpen(false); onEnterApp(); }}
                   className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl font-medium w-full"
                 >
-                  Try Free
+                  {t('landing.nav.tryFree')}
                 </button>
+                <LanguageSelector />
               </div>
             </div>
           )}
@@ -226,21 +201,20 @@ const LandingPage = ({ onEnterApp }) => {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-sm mb-8 border border-white/10">
               <Zap className="w-4 h-4 text-yellow-400" />
-              <span>Powered by Claude AI</span>
+              <span>{t('landing.hero.badge')}</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              Analyze Any Property
+              {t('landing.hero.title1')}
               <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Investment in Seconds
+                {t('landing.hero.title2')}
               </span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto">
-              Upload property documents, get instant AI-powered risk analysis, 
-              and make smarter investment decisions worldwide.
+              {t('landing.hero.subtitle')}
             </p>
 
             {/* CTA Buttons */}
@@ -249,12 +223,12 @@ const LandingPage = ({ onEnterApp }) => {
                 onClick={onEnterApp}
                 className="group px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl font-semibold text-lg transition-all hover:shadow-xl hover:shadow-purple-500/25 flex items-center gap-2"
               >
-                Start Free Analysis
+                {t('landing.hero.ctaPrimary')}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button className="px-8 py-4 bg-white/10 hover:bg-white/20 rounded-xl font-semibold text-lg transition-all flex items-center gap-2 border border-white/10">
                 <Play className="w-5 h-5" />
-                Watch Demo
+                {t('landing.hero.ctaDemo')}
               </button>
             </div>
 
@@ -286,22 +260,22 @@ const LandingPage = ({ onEnterApp }) => {
                   {/* Property Card Preview */}
                   <div className="bg-white/5 rounded-xl p-6 border border-white/10">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-semibold">Luxury Villa</h3>
-                      <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">Low Risk</span>
+                      <h3 className="font-semibold">{t('landing.demo.villa')}</h3>
+                      <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">{t('landing.demo.lowRisk')}</span>
                     </div>
-                    <p className="text-sm text-gray-400 mb-4">Palm Jumeirah, Dubai</p>
+                    <p className="text-sm text-gray-400 mb-4">{t('landing.demo.location')}</p>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Price</span>
-                      <span className="text-green-400 font-semibold">AED 8.5M</span>
+                      <span className="text-gray-500">{t('landing.demo.price')}</span>
+                      <span className="text-green-400 font-semibold">{t('landing.demo.priceValue')}</span>
                     </div>
                   </div>
                   
                   {/* Risk Score Preview */}
                   <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                    <h3 className="font-semibold mb-4">Risk Score</h3>
+                    <h3 className="font-semibold mb-4">{t('landing.demo.riskScore')}</h3>
                     <div className="flex items-center gap-4 mb-4">
                       <div className="text-4xl font-bold text-green-400">28%</div>
-                      <div className="text-sm text-gray-400">Low Risk<br/>Investment</div>
+                      <div className="text-sm text-gray-400">{t('landing.demo.lowRisk')}<br/>{t('landing.demo.investment')}</div>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                       <div className="h-full w-[28%] bg-gradient-to-r from-green-500 to-green-400 rounded-full" />
@@ -310,19 +284,19 @@ const LandingPage = ({ onEnterApp }) => {
 
                   {/* Analysis Preview */}
                   <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                    <h3 className="font-semibold mb-4">AI Analysis</h3>
+                    <h3 className="font-semibold mb-4">{t('landing.demo.aiAnalysis')}</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-400" />
-                        <span className="text-gray-300">Established developer</span>
+                        <span className="text-gray-300">{t('landing.demo.pro1')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-400" />
-                        <span className="text-gray-300">Prime location</span>
+                        <span className="text-gray-300">{t('landing.demo.pro2')}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-yellow-400" />
-                        <span className="text-gray-300">Market average price</span>
+                        <span className="text-gray-300">{t('landing.demo.warn')}</span>
                       </div>
                     </div>
                   </div>
@@ -338,13 +312,13 @@ const LandingPage = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Everything You Need to
+              {t('landing.features.title1')}
               <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                Invest with Confidence
+                {t('landing.features.title2')}
               </span>
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Powerful AI tools designed for modern real estate investors
+              {t('landing.features.subtitle')}
             </p>
           </div>
 
@@ -370,10 +344,10 @@ const LandingPage = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              How It Works
+              {t('landing.how.title')}
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              From document to insights in three simple steps
+              {t('landing.how.subtitle')}
             </p>
           </div>
 
@@ -399,10 +373,10 @@ const LandingPage = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Loved by Investors
+              {t('landing.testimonials.title')}
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              See what our users are saying
+              {t('landing.testimonials.subtitle')}
             </p>
           </div>
 
@@ -433,10 +407,10 @@ const LandingPage = ({ onEnterApp }) => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Simple, Transparent Pricing
+              {t('landing.pricing.title')}
             </h2>
             <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-              Start free, upgrade when you need more
+              {t('landing.pricing.subtitle')}
             </p>
           </div>
 
@@ -452,7 +426,7 @@ const LandingPage = ({ onEnterApp }) => {
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full text-sm font-medium">
-                    Most Popular
+                    {t('landing.pricing.popular')}
                   </div>
                 )}
                 <div className="text-center mb-8">
@@ -490,22 +464,22 @@ const LandingPage = ({ onEnterApp }) => {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Make Smarter
+            {t('landing.cta.title1')}
             <span className="block bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Investment Decisions?
+              {t('landing.cta.title2')}
             </span>
           </h2>
           <p className="text-xl text-gray-400 mb-10">
-            Join thousands of investors using AI to analyze properties worldwide.
+            {t('landing.cta.subtitle')}
           </p>
           <button 
             onClick={onEnterApp}
             className="group px-10 py-5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl font-semibold text-xl transition-all hover:shadow-xl hover:shadow-purple-500/25 inline-flex items-center gap-3"
           >
-            Get Started — It's Free
+            {t('landing.cta.button')}
             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
           </button>
-          <p className="text-gray-500 mt-4 text-sm">No credit card required</p>
+          <p className="text-gray-500 mt-4 text-sm">{t('landing.cta.note')}</p>
         </div>
       </section>
 
@@ -520,12 +494,12 @@ const LandingPage = ({ onEnterApp }) => {
               <span className="text-xl font-bold">Property Check</span>
             </div>
             <div className="flex items-center gap-8 text-gray-400 text-sm">
-              <button onClick={() => setLegalDoc('privacy')} className="hover:text-white transition">Privacy Policy</button>
-              <button onClick={() => setLegalDoc('terms')} className="hover:text-white transition">Terms of Service</button>
-              <a href="mailto:hello@property-check.com" className="hover:text-white transition">Contact</a>
+              <button onClick={() => setLegalDoc('privacy')} className="hover:text-white transition">{t('landing.footer.privacy')}</button>
+              <button onClick={() => setLegalDoc('terms')} className="hover:text-white transition">{t('landing.footer.terms')}</button>
+              <a href="mailto:hello@property-check.com" className="hover:text-white transition">{t('landing.footer.contact')}</a>
             </div>
             <div className="text-gray-500 text-sm">
-              © {new Date().getFullYear()} Property Check. All rights reserved.
+              {t('landing.footer.rights', { year: new Date().getFullYear() })}
             </div>
           </div>
         </div>

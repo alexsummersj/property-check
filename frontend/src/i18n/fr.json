@@ -142,5 +142,133 @@
     "location": "Emplacement",
     "type": "Type",
     "area": "Surface"
+  },
+  "landing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "how": "Comment ça marche",
+      "pricing": "Tarifs",
+      "tryFree": "Essayer"
+    },
+    "hero": {
+      "badge": "Propulsé par Claude AI",
+      "title1": "Analysez n’importe quel bien",
+      "title2": "en quelques secondes",
+      "subtitle": "Téléversez les documents du bien, obtenez une analyse des risques instantanée par IA et prenez de meilleures décisions d’investissement partout dans le monde.",
+      "ctaPrimary": "Lancer l’analyse gratuite",
+      "ctaDemo": "Voir la démo"
+    },
+    "stats": {
+      "s1": "Biens analysés",
+      "s2": "Pays couverts",
+      "s3": "Langues",
+      "s4": "Précision"
+    },
+    "demo": {
+      "villa": "Villa de luxe",
+      "lowRisk": "Risque faible",
+      "investment": "Investissement",
+      "location": "Palm Jumeirah, Dubaï",
+      "price": "Prix",
+      "priceValue": "8,5 M AED",
+      "riskScore": "Score de risque",
+      "aiAnalysis": "Analyse IA",
+      "pro1": "Promoteur établi",
+      "pro2": "Emplacement premium",
+      "warn": "Prix dans la moyenne du marché"
+    },
+    "features": {
+      "title1": "Tout ce qu’il faut pour",
+      "title2": "investir en confiance",
+      "subtitle": "Des outils d’IA puissants conçus pour les investisseurs immobiliers modernes",
+      "i1title": "Analyse PDF par IA",
+      "i1desc": "Téléversez n’importe quel document : l’IA extrait toutes les données clés en quelques secondes",
+      "i2title": "Évaluation des risques",
+      "i2desc": "Des scores de risque immédiats fondés sur l’historique du promoteur, l’emplacement et les tendances du marché",
+      "i3title": "Couverture mondiale",
+      "i3desc": "Fonctionne partout dans le monde — Dubaï, Londres, New York et au-delà",
+      "i4title": "Analyses d’investissement",
+      "i4desc": "Une analyse générée par IA sur le potentiel de croissance, la comparaison des marchés et le timing"
+    },
+    "how": {
+      "title": "Comment ça marche",
+      "subtitle": "Du document à l’analyse en trois étapes simples",
+      "s1title": "Téléversez les documents",
+      "s1desc": "Déposez vos PDF — brochures, contrats ou annonces",
+      "s2title": "Analyse par IA",
+      "s2desc": "L’IA extrait les données et évalue le potentiel d’investissement",
+      "s3title": "Recevez les insights",
+      "s3desc": "Scores de risque, recommandations et analyse de marché"
+    },
+    "testimonials": {
+      "title": "Adopté par les investisseurs",
+      "subtitle": "Ce que disent nos utilisateurs",
+      "t1text": "Enfin un outil qui rend la recherche immobilière fluide. Il m’a évité des semaines de due diligence.",
+      "t1author": "Sarah M.",
+      "t1role": "Investisseur immobilier",
+      "t2text": "À lui seul, l’évaluation des risques vaut le détour : elle m’a évité un mauvais investissement.",
+      "t2author": "James K.",
+      "t2role": "Gérant de portefeuille",
+      "t3text": "Le multilinguisme change tout pour l’investissement immobilier international.",
+      "t3author": "Ahmed R.",
+      "t3role": "Promoteur immobilier"
+    },
+    "pricing": {
+      "title": "Des tarifs simples et transparents",
+      "subtitle": "Commencez gratuitement, évoluez quand vous le souhaitez",
+      "popular": "Le plus populaire",
+      "free": "Gratuit",
+      "freePrice": "$0",
+      "freePeriod": "pour toujours",
+      "freeCta": "Commencer",
+      "f1": "5 analyses de biens par mois",
+      "f2": "Évaluation de risque de base",
+      "f3": "Lecture des documents PDF",
+      "f4": "3 langues",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/mois",
+      "proCta": "Démarrer l’essai gratuit",
+      "p1": "Analyses illimitées",
+      "p2": "Score de risque avancé",
+      "p3": "Traitement IA prioritaire",
+      "p4": "Les 13 langues",
+      "p5": "Export des rapports",
+      "p6": "Support par e-mail",
+      "ent": "Entreprise",
+      "entPrice": "Sur mesure",
+      "entCta": "Contacter les ventes",
+      "e1": "Tout le plan Pro",
+      "e2": "Accès API",
+      "e3": "Intégrations sur mesure",
+      "e4": "Support dédié",
+      "e5": "Travail en équipe",
+      "e6": "Option marque blanche"
+    },
+    "cta": {
+      "title1": "Prêt à prendre de meilleures",
+      "title2": "décisions d’investissement ?",
+      "subtitle": "Rejoignez les milliers d’investisseurs qui analysent des biens dans le monde entier grâce à l’IA.",
+      "button": "Commencer — c’est gratuit",
+      "note": "Sans carte bancaire"
+    },
+    "footer": {
+      "privacy": "Politique de confidentialité",
+      "terms": "Conditions d’utilisation",
+      "contact": "Contact",
+      "rights": "© {year} Property Check. Tous droits réservés."
+    },
+    "legal": {
+      "privacyTitle": "Politique de confidentialité",
+      "privacy1": "Nous conservons le strict nécessaire au fonctionnement du service : votre nom et votre e-mail, un hash bcrypt de votre mot de passe, les biens ajoutés et le nombre d’analyses réalisées.",
+      "privacy2": "Les documents téléversés sont transmis à Anthropic (API Claude) pour l’extraction des données et la génération de l’analyse. Nous ne vendons pas vos données.",
+      "privacy3": "Votre liste de biens est également mise en cache dans le navigateur (localStorage) et conservée sur notre serveur : vous la retrouvez sur un autre appareil après connexion.",
+      "privacy4": "Une demande écrite à hello@property-check.com — et votre compte ainsi que toutes vos données sont supprimés.",
+      "termsTitle": "Conditions d’utilisation",
+      "terms1": "Property Check est un assistant de recherche par IA. Il fournit de l’information, et non un conseil financier, juridique ou fiscal, encore moins une expertise agréée.",
+      "terms2": "Les chiffres du marché sont des estimations issues de sources ouvertes et peuvent être dépassés — vérifiez-les au regard des transactions DLD et du SPA avant de signer.",
+      "terms3": "Le service est fourni « en l’état ». Nous ne sommes pas responsables des décisions d’investissement prises sur la base de l’analyse.",
+      "terms4": "Pendant la bêta, les utilisateurs inscrits bénéficient d’analyses illimitées ; les utilisateurs anonymes disposent d’un quota limité par appareil."
+    }
   }
 }

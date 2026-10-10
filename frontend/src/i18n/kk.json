@@ -142,5 +142,133 @@
     "location": "Ornalasuy",
     "type": "Turi",
     "area": "Aumagy"
+  },
+  "landing": {
+    "nav": {
+      "features": "Mumkindikter",
+      "how": "Qalay jüzege asady",
+      "pricing": "Tarifter",
+      "tryFree": "Tegin synap koru"
+    },
+    "hero": {
+      "badge": "Claude AI negizinde",
+      "title1": "Kez kelgen mulikti talday alasyz",
+      "title2": "birneche sekundynda",
+      "subtitle": "Mulik kujattaryn juktengiz — AI negizinde taulqetetterdi tez bagalap, alem boyynsha dana sheshim qabyl alasyz.",
+      "ctaPrimary": "Tegin taldaudy bastau",
+      "ctaDemo": "Dynu koru"
+    },
+    "stats": {
+      "s1": "Taldanğan mulik",
+      "s2": "Qamtylgan elder",
+      "s3": "Tilder",
+      "s4": "Anyqtyq"
+    },
+    "demo": {
+      "villa": "Lux villasi",
+      "lowRisk": "Tomen taulqet",
+      "investment": "investiciya",
+      "location": "Palm Jumeirah, Dubay",
+      "price": "Baga",
+      "priceValue": "8,5 mln AED",
+      "riskScore": "Taulqet bali",
+      "aiAnalysis": "AI taldauy",
+      "pro1": "Tanymal dairipker",
+      "pro2": "Taptama orny",
+      "warn": "Nariga ortasha baga"
+    },
+    "features": {
+      "title1": "Senimdi investiciya üshin",
+      "title2": "kerekterdiñ barlygy",
+      "subtitle": "Zamanauy mulik investorlaryna arnalğan küshti AI kuraldary",
+      "i1title": "PDF-ti AI arqaly taldau",
+      "i1desc": "Mulik kujattaryn juktengiz — AI negizgi derekterdi birneche sekundynda shygarady",
+      "i2title": "Taulqetetterdi bagalau",
+      "i2desc": "Dairipker tarixyna, ornalasuyyna jane naryq tendenciyalaryna säikes tez taulqet bali",
+      "i3title": "Alypqamty qamtu",
+      "i3desc": "Alemniñ kez kelgen mulikimen jümys isteidy — Dubay, London, Niu-Iork jane basqalar",
+      "i4title": "Investiciyalyq tujirimder",
+      "i4desc": "Osum peraazy, naryqtardy salystyru jane uaqyty AI tarapynan taldanady"
+    },
+    "how": {
+      "title": "Qalay jüzege asady",
+      "subtitle": "Kujattan tujirimge üsh qarayym qadamda",
+      "s1title": "Kujattardy juktengiz",
+      "s1desc": "Muliktiñ PDF fajldaryn tastañ — broshyura, shart nemese jarnama",
+      "s2title": "AI taldauy",
+      "s2desc": "AI derekterdi shygaryp, investiciyalyq peraazy taldaydy",
+      "s3title": "Tujirimderdi alyñyz",
+      "s3desc": "Taulqet bali, usynystar jane naryq taldauy"
+    },
+    "testimonials": {
+      "title": "Investorlardyñ süiktip jürgen kuraly",
+      "subtitle": "Paidalanushylarymyz ne deydi",
+      "t1text": "Aqyr soñy mulikti zertteudy jeñildetetin qural payda boldy. Mağan birneshe apta tekseristi ünemdedi.",
+      "t1author": "Sara M.",
+      "t1role": "Mulik injestory",
+      "t2text": "Taulqetetterdi bagalau funksiyaasy nybaqtyñ özi aqtalaydy — ol meni sats sheshimnen saqtap qaldy.",
+      "t2author": "Jeyms K.",
+      "t2role": "Portfolio basqaruşysy",
+      "t3text": "Koptildililik halyqaralyq mulik investiciyasynda ürdisti özger tipti.",
+      "t3author": "Ahmed R.",
+      "t3role": "Mulik dairipkeri"
+    },
+    "pricing": {
+      "title": "Qarayym jane anyq tarifter",
+      "subtitle": "Tegin bastap, kerek bolğanda keñeytiñiz",
+      "popular": "Eñ tanymal",
+      "free": "Tegin",
+      "freePrice": "$0",
+      "freePeriod": "mäñgi",
+      "freeCta": "Bastau",
+      "f1": "Ayyna 5 mulik taldauy",
+      "f2": "Negizgi taulqet bagalau",
+      "f3": "PDF kujattardy öñdeu",
+      "f4": "3 til",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/ai",
+      "proCta": "Tegin synaqty bastau",
+      "p1": "Shekteulmegen taldau",
+      "p2": "Keñeytilgen taulqet bali",
+      "p3": "AI öñdeuinda basymdyq",
+      "p4": "13 tilding bari",
+      "p5": "Esepterdı eksporttau",
+      "p6": "Email arqaly qoldau",
+      "ent": "Korporativ",
+      "entPrice": "Jeke",
+      "entCta": "Satym bölshesine jazyñyz",
+      "e1": "Pro tarifiñ barlyğy",
+      "e2": "API qatynasy",
+      "e3": "Jeke integraciyalar",
+      "e4": "Jeke qoldau",
+      "e5": "Komanda bolyyp jümys isteu",
+      "e6": "Aq qalyqty opsiya"
+    },
+    "cta": {
+      "title1": "Dañalyq sheshim qabyldauğa",
+      "title2": "dayynsyz ba?",
+      "subtitle": "AI arqaly alem muliktelerin taldaytyn myñdağan investorğa qosylyñyz.",
+      "button": "Bastau — tegin",
+      "note": "Senim kartasy kerek emes"
+    },
+    "footer": {
+      "privacy": "Qupiya syasaty",
+      "terms": "Paidalanu sharttary",
+      "contact": "Baylanys",
+      "rights": "© {year} Property Check. Barlyq quqyqtar qorgalğan."
+    },
+    "legal": {
+      "privacyTitle": "Qupiya syasaty",
+      "privacy1": "Qyzmetti jürgizuge kerekti minimumdy saqtaymyz: atyñyz ben email, paroldiñ bcrypt heshi, qosylğan muliktar jane jasalgan taldau sanağı.",
+      "privacy2": "Jüktelgen mulik kujattary derekterdi shygaru jane taldau dayyndau üshin Anthropic (Claude API) kompaniyasyna jiberiledi. Biz derekteriñizdi satpaymyz.",
+      "privacy3": "Mulik tizimi brauzerde (localStorage) da keñeyti saqtalyp, serverimizde jüreydi — kiretin künde basqa qurılmany da jalğastyr alysyñyz.",
+      "privacy4": "hello@property-check.com mekenkaynyna jazdy jiberseniz — akkaunttyñyz barlyq derekterimen joyylady.",
+      "termsTitle": "Paidalanu sharttary",
+      "terms1": "Property Check — AI zertteu kómekshisi. Ol aqparat beredi, qarjylyq, zañdyq nemese salyqtyq keñes bermeydi jane litsenziyalanğan bağa emes.",
+      "terms2": "Naryq kórsetkishteri ashyq kózderden alynğan boljam, eskirgen boluy mümkin — qol qoyğanda DLD meshilderi men SPA shartymen mindetti tekseriñiz.",
+      "terms3": "Qyzmet «bar mynyty» jüzesinde üsyniledi. Taldau negizinde qabyldanğan investiciyalyq sheshimder üshin jawap bermeymiz.",
+      "terms4": "Beta kezinde tirkelgen paidalanushylar shekteulmegen taldau alady; anonim paidalanushylarğa qurılma sanağı shekteulı."
+    }
   }
 }

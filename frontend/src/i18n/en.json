@@ -134,7 +134,6 @@
     "cost": "Cost",
     "pricePerSqft": "Price/sq.ft",
     "pricePerSqm": "Price/m²",
-    "pricePerSqm": "Price/m²",
     "developer": "Developer",
     "corrections": "correction(s)"
   },
@@ -143,5 +142,133 @@
     "location": "Location",
     "type": "Type",
     "area": "Area"
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "how": "How it Works",
+      "pricing": "Pricing",
+      "tryFree": "Try Free"
+    },
+    "hero": {
+      "badge": "Powered by Claude AI",
+      "title1": "Analyze Any Property",
+      "title2": "Investment in Seconds",
+      "subtitle": "Upload property documents, get instant AI-powered risk analysis, and make smarter investment decisions worldwide.",
+      "ctaPrimary": "Start Free Analysis",
+      "ctaDemo": "Watch Demo"
+    },
+    "stats": {
+      "s1": "Properties Analyzed",
+      "s2": "Countries Covered",
+      "s3": "Languages",
+      "s4": "Accuracy Rate"
+    },
+    "demo": {
+      "villa": "Luxury Villa",
+      "lowRisk": "Low Risk",
+      "investment": "Investment",
+      "location": "Palm Jumeirah, Dubai",
+      "price": "Price",
+      "priceValue": "AED 8.5M",
+      "riskScore": "Risk Score",
+      "aiAnalysis": "AI Analysis",
+      "pro1": "Established developer",
+      "pro2": "Prime location",
+      "warn": "Market average price"
+    },
+    "features": {
+      "title1": "Everything You Need to",
+      "title2": "Invest with Confidence",
+      "subtitle": "Powerful AI tools designed for modern real estate investors",
+      "i1title": "AI-Powered PDF Analysis",
+      "i1desc": "Upload any property document — our AI extracts all key data in seconds",
+      "i2title": "Risk Assessment",
+      "i2desc": "Get instant risk scores based on developer history, location, and market trends",
+      "i3title": "Global Coverage",
+      "i3desc": "Works with properties worldwide — Dubai, London, New York, and beyond",
+      "i4title": "Investment Insights",
+      "i4desc": "AI-generated analysis on growth potential, market comparisons, and timing"
+    },
+    "how": {
+      "title": "How It Works",
+      "subtitle": "From document to insights in three simple steps",
+      "s1title": "Upload Documents",
+      "s1desc": "Drop your property PDFs — brochures, contracts, or listings",
+      "s2title": "AI Analysis",
+      "s2desc": "Our AI extracts data and analyzes investment potential",
+      "s3title": "Get Insights",
+      "s3desc": "Receive risk scores, recommendations, and market analysis"
+    },
+    "testimonials": {
+      "title": "Loved by Investors",
+      "subtitle": "See what our users are saying",
+      "t1text": "Finally, a tool that makes property research effortless. Saved me weeks of due diligence.",
+      "t1author": "Sarah M.",
+      "t1role": "Real Estate Investor",
+      "t2text": "The risk assessment feature alone is worth it. Helped me avoid a bad investment.",
+      "t2author": "James K.",
+      "t2role": "Portfolio Manager",
+      "t3text": "Multilingual support is a game-changer for international property investing.",
+      "t3author": "Ahmed R.",
+      "t3role": "Property Developer"
+    },
+    "pricing": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "Start free, upgrade when you need more",
+      "popular": "Most Popular",
+      "free": "Free",
+      "freePrice": "$0",
+      "freePeriod": "forever",
+      "freeCta": "Get Started",
+      "f1": "5 property analyses/month",
+      "f2": "Basic risk assessment",
+      "f3": "PDF document parsing",
+      "f4": "3 languages",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/month",
+      "proCta": "Start Free Trial",
+      "p1": "Unlimited analyses",
+      "p2": "Advanced risk scoring",
+      "p3": "Priority AI processing",
+      "p4": "All 13 languages",
+      "p5": "Export reports",
+      "p6": "Email support",
+      "ent": "Enterprise",
+      "entPrice": "Custom",
+      "entCta": "Contact Sales",
+      "e1": "Everything in Pro",
+      "e2": "API access",
+      "e3": "Custom integrations",
+      "e4": "Dedicated support",
+      "e5": "Team collaboration",
+      "e6": "White-label option"
+    },
+    "cta": {
+      "title1": "Ready to Make Smarter",
+      "title2": "Investment Decisions?",
+      "subtitle": "Join thousands of investors using AI to analyze properties worldwide.",
+      "button": "Get Started — It's Free",
+      "note": "No credit card required"
+    },
+    "footer": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "contact": "Contact",
+      "rights": "© {year} Property Check. All rights reserved."
+    },
+    "legal": {
+      "privacyTitle": "Privacy Policy",
+      "privacy1": "We store the minimum needed to run the service: your name and email, a bcrypt hash of your password, the properties you add and the number of analyses you have run.",
+      "privacy2": "Property documents you upload are sent to Anthropic (Claude API) to extract data and generate analysis. We do not sell your data.",
+      "privacy3": "Your property list is also cached in your browser (localStorage) and kept on our server, so you can return on another device after signing in.",
+      "privacy4": "Written request to hello@property-check.com — and your account with all its data is deleted.",
+      "termsTitle": "Terms of Service",
+      "terms1": "Property Check is an AI research assistant. It provides information, not financial, legal or tax advice, and is not a licensed valuation.",
+      "terms2": "Market numbers are estimates collected from open sources and may be outdated — always verify them against DLD transactions and the SPA before signing.",
+      "terms3": "The service is provided \"as is\". We are not responsible for investment decisions made on the basis of the analysis.",
+      "terms4": "During the beta, registered users get unlimited analyses; anonymous users get a limited number per device."
+    }
   }
 }

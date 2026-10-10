@@ -142,5 +142,133 @@
     "location": "Posizione",
     "type": "Tipo",
     "area": "Superficie"
+  },
+  "landing": {
+    "nav": {
+      "features": "Funzionalità",
+      "how": "Come funziona",
+      "pricing": "Prezzi",
+      "tryFree": "Prova gratis"
+    },
+    "hero": {
+      "badge": "Basato su Claude AI",
+      "title1": "Analizza qualsiasi immobile",
+      "title2": "in pochi secondi",
+      "subtitle": "Carica i documenti dell’immobile, ottieni subito l’analisi del rischio con l’IA e prendi decisioni di investimento più consapevoli in tutto il mondo.",
+      "ctaPrimary": "Inizia l’analisi gratuita",
+      "ctaDemo": "Guarda la demo"
+    },
+    "stats": {
+      "s1": "Immobili analizzati",
+      "s2": "Paesi coperti",
+      "s3": "Lingue",
+      "s4": "Precisione"
+    },
+    "demo": {
+      "villa": "Villa di lusso",
+      "lowRisk": "Rischio basso",
+      "investment": "Investimento",
+      "location": "Palm Jumeirah, Dubai",
+      "price": "Prezzo",
+      "priceValue": "8,5 mln AED",
+      "riskScore": "Punteggio di rischio",
+      "aiAnalysis": "Analisi IA",
+      "pro1": "Sviluppatore consolidato",
+      "pro2": "Zona pregiata",
+      "warn": "Prezzo in media di mercato"
+    },
+    "features": {
+      "title1": "Tutto ciò che serve per",
+      "title2": "investire con sicurezza",
+      "subtitle": "Potenti strumenti di IA pensati per l’investitore immobiliare moderno",
+      "i1title": "Analisi PDF con IA",
+      "i1desc": "Carica qualsiasi documento dell’immobile: l’IA estrae tutti i dati chiave in pochi secondi",
+      "i2title": "Valutazione del rischio",
+      "i2desc": "Punteggi di rischio immediati basati sullo storico dello sviluppatore, sulla zona e sulle tendenze di mercato",
+      "i3title": "Copertura globale",
+      "i3desc": "Funziona con immobili di tutto il mondo: Dubai, Londra, New York e oltre",
+      "i4title": "Approfondimenti sull’investimento",
+      "i4desc": "Analisi generate dall’IA su potenziale di crescita, confronto tra mercati e tempismo"
+    },
+    "how": {
+      "title": "Come funziona",
+      "subtitle": "Dal documento agli approfondimenti in tre semplici passi",
+      "s1title": "Carica i documenti",
+      "s1desc": "Trascina i PDF dell’immobile: brochure, contratti o annunci",
+      "s2title": "Analisi con IA",
+      "s2desc": "L’IA estrae i dati e analizza il potenziale di investimento",
+      "s3title": "Ricevi gli approfondimenti",
+      "s3desc": "Punteggi di rischio, raccomandazioni e analisi di mercato"
+    },
+    "testimonials": {
+      "title": "Preferito dagli investitori",
+      "subtitle": "Cosa dicono i nostri utenti",
+      "t1text": "Finalmente uno strumento che rende semplice la ricerca immobiliare. Mi ha fatto risparmiare settimane di due diligence.",
+      "t1author": "Sarah M.",
+      "t1role": "Investitrice immobiliare",
+      "t2text": "Solo la valutazione del rischio vale il prezzo: mi ha evitato un cattivo investimento.",
+      "t2author": "James K.",
+      "t2role": "Gestore di portafoglio",
+      "t3text": "Il supporto multilingue cambia le regole per gli investimenti immobiliari internazionali.",
+      "t3author": "Ahmed R.",
+      "t3role": "Sviluppatore immobiliare"
+    },
+    "pricing": {
+      "title": "Prezzi semplici e trasparenti",
+      "subtitle": "Inizia gratis, passa a un piano superiore quando ti serve",
+      "popular": "Più scelto",
+      "free": "Gratis",
+      "freePrice": "$0",
+      "freePeriod": "per sempre",
+      "freeCta": "Inizia",
+      "f1": "5 analisi immobili al mese",
+      "f2": "Valutazione del rischio base",
+      "f3": "Lettura documenti PDF",
+      "f4": "3 lingue",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/mese",
+      "proCta": "Prova gratis",
+      "p1": "Analisi illimitate",
+      "p2": "Punteggio di rischio avanzato",
+      "p3": "Elaborazione IA prioritaria",
+      "p4": "Tutte le 13 lingue",
+      "p5": "Esportazione report",
+      "p6": "Supporto via email",
+      "ent": "Aziende",
+      "entPrice": "Su misura",
+      "entCta": "Contatta le vendite",
+      "e1": "Tutto del piano Pro",
+      "e2": "Accesso API",
+      "e3": "Integrazioni su misura",
+      "e4": "Supporto dedicato",
+      "e5": "Collaborazione di team",
+      "e6": "Opzione white-label"
+    },
+    "cta": {
+      "title1": "Pronto a prendere decisioni",
+      "title2": "di investimento più intelligenti?",
+      "subtitle": "Unisciti alle migliaia di investitori che analizzano immobili nel mondo con l’IA.",
+      "button": "Inizia — è gratis",
+      "note": "Nessuna carta di credito richiesta"
+    },
+    "footer": {
+      "privacy": "Informativa sulla privacy",
+      "terms": "Termini di servizio",
+      "contact": "Contatti",
+      "rights": "© {year} Property Check. Tutti i diritti riservati."
+    },
+    "legal": {
+      "privacyTitle": "Informativa sulla privacy",
+      "privacy1": "Conserviamo il minimo necessario al funzionamento del servizio: nome ed email, un hash bcrypt della password, gli immobili aggiunti e il numero di analisi effettuate.",
+      "privacy2": "I documenti dell’immobile che carichi vengono inviati ad Anthropic (Claude API) per l’estrazione dei dati e la generazione dell’analisi. Non vendiamo i tuoi dati.",
+      "privacy3": "L’elenco dei tuoi immobili è inoltre salvato nella cache del browser (localStorage) e sul nostro server: dopo l’accesso lo ritroverai su un altro dispositivo.",
+      "privacy4": "Basta una richiesta scritta a hello@property-check.com e il tuo account, con tutti i dati, viene eliminato.",
+      "termsTitle": "Termini di servizio",
+      "terms1": "Property Check è un assistente di ricerca basato sull’IA. Fornisce informazioni, non consulenze finanziarie, legali o fiscali, e non è una valutazione certificata.",
+      "terms2": "I numeri di mercato sono stime da fonti aperte e potrebbero essere superate: verifica sempre le transazioni DLD e la SPA prima di firmare.",
+      "terms3": "Il servizio è fornito «così com’è». Non siamo responsabili delle decisioni di investimento prese sulla base dell’analisi.",
+      "terms4": "Durante la beta gli utenti registrati hanno analisi illimitate; gli utenti anonimi dispongono di un numero limitato per dispositivo."
+    }
   }
 }

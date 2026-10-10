@@ -14,6 +14,9 @@ import ka from './ka.json';
 
 export const translations = { en, ru, ar, zh, fr, es, de, it, ja, th, cs, kk, ka };
 
+// Тот же ключ, что использовало приложение, — выбор языка на лендинге действует и внутри него
+export const LANGUAGE_STORAGE_KEY = 'real_estate_language';
+
 export const languages = [
   { code: 'en', name: 'English', country: 'gb' },
   { code: 'ru', name: 'Русский', country: 'ru' },
@@ -30,11 +33,27 @@ export const languages = [
   { code: 'ka', name: 'ქართული', country: 'ge' }
 ];
 
-export const getTranslation = (lang, path) => {
+// Язык по умолчанию: сохранённый выбор, иначе язык браузера (ru-RU → ru), иначе английский
+export const detectLanguage = () => {
+  try {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored && translations[stored]) return stored;
+  } catch {}
+  const nav = (typeof navigator !== 'undefined' && (navigator.language || '')) || '';
+  const code = nav.toLowerCase().split(/[-_]/)[0];
+  return translations[code] ? code : 'en';
+};
+
+export const getTranslation = (lang, path, params) => {
   const keys = path.split('.');
   const dig = (obj) => keys.reduce((o, k) => (o == null ? undefined : o[k]), obj);
   let result = dig(translations[lang] || translations['en']);
   // недостающий перевод берём из английского, а не показываем путь вроде "header.backToSite"
   if (result == null) result = dig(translations['en']);
+  if (params && typeof result === 'string') {
+    for (const [key, value] of Object.entries(params)) {
+      result = result.split(`{${key}}`).join(value);
+    }
+  }
   return result || path;
 };

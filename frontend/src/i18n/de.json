@@ -142,5 +142,133 @@
     "location": "Standort",
     "type": "Typ",
     "area": "Fläche"
+  },
+  "landing": {
+    "nav": {
+      "features": "Funktionen",
+      "how": "So funktioniert’s",
+      "pricing": "Preise",
+      "tryFree": "Kostenlos testen"
+    },
+    "hero": {
+      "badge": "Basierend auf Claude AI",
+      "title1": "Analysiere jede Immobilie",
+      "title2": "in Sekunden",
+      "subtitle": "Laden Sie Objektdokumente hoch, erhalten Sie sofortige KI-Risikobewertung und treffen Sie weltweit bessere Anlageentscheidungen.",
+      "ctaPrimary": "Kostenlose Analyse starten",
+      "ctaDemo": "Demo ansehen"
+    },
+    "stats": {
+      "s1": "Analysierte Objekte",
+      "s2": "Abgedeckte Länder",
+      "s3": "Sprachen",
+      "s4": "Genauigkeit"
+    },
+    "demo": {
+      "villa": "Luxusvilla",
+      "lowRisk": "Geringes Risiko",
+      "investment": "Investment",
+      "location": "Palm Jumeirah, Dubai",
+      "price": "Preis",
+      "priceValue": "8,5 Mio. AED",
+      "riskScore": "Risikoscore",
+      "aiAnalysis": "KI-Analyse",
+      "pro1": "Etablierter Entwickler",
+      "pro2": "Top-Lage",
+      "warn": "Preis im Marktdurchschnitt"
+    },
+    "features": {
+      "title1": "Alles, was Sie brauchen, um",
+      "title2": "sicher zu investieren",
+      "subtitle": "Leistungsstarke KI-Tools für moderne Immobilieninvestoren",
+      "i1title": "KI-gestützte PDF-Analyse",
+      "i1desc": "Laden Sie jedes Objektdokument hoch — die KI extrahiert alle relevanten Daten in Sekunden",
+      "i2title": "Risikobewertung",
+      "i2desc": "Sofortige Risikoscores auf Basis von Entwicklerhistorie, Lage und Markttrends",
+      "i3title": "Weltweite Abdeckung",
+      "i3desc": "Funktioniert mit Objekten weltweit — Dubai, London, New York und weiter",
+      "i4title": "Investment-Erkenntnisse",
+      "i4desc": "KI-generierte Analyse zu Wachstumspotenzial, Marktvergleich und Timing"
+    },
+    "how": {
+      "title": "So funktioniert’s",
+      "subtitle": "Vom Dokument zur Erkenntnis in drei einfachen Schritten",
+      "s1title": "Dokumente hochladen",
+      "s1desc": "Ziehen Sie die PDFs des Objekts hierher — Broschüre, Vertrag oder Inserat",
+      "s2title": "KI-Analyse",
+      "s2desc": "Die KI extrahiert die Daten und bewertet das Anlagepotenzial",
+      "s3title": "Erkenntnisse erhalten",
+      "s3desc": "Risikoscores, Empfehlungen und Marktanalyse"
+    },
+    "testimonials": {
+      "title": "Bei Investoren beliebt",
+      "subtitle": "Das sagen unsere Nutzer",
+      "t1text": "Endlich ein Tool, das die Immobilienrecherche mühelos macht. Es hat mir wochenlange Prüfarbeit erspart.",
+      "t1author": "Sarah M.",
+      "t1role": "Immobilieninvestorin",
+      "t2text": "Allein die Risikobewertung ist den Preis wert — sie hat mich vor einer schlechten Anlage bewahrt.",
+      "t2author": "James K.",
+      "t2role": "Portfolio Manager",
+      "t3text": "Die Mehrsprachigkeit ist ein echter Wendepunkt für internationale Immobilienanlagen.",
+      "t3author": "Ahmed R.",
+      "t3role": "Projektentwickler"
+    },
+    "pricing": {
+      "title": "Einfache, transparente Preise",
+      "subtitle": "Kostenlos starten, upgraden wenn Sie mehr brauchen",
+      "popular": "Am beliebtesten",
+      "free": "Gratis",
+      "freePrice": "$0",
+      "freePeriod": "für immer",
+      "freeCta": "Loslegen",
+      "f1": "5 Objektanalysen/Monat",
+      "f2": "Basis-Risikobewertung",
+      "f3": "Auswertung von PDF-Dokumenten",
+      "f4": "3 Sprachen",
+      "pro": "Pro",
+      "proPrice": "$19",
+      "proPeriod": "/Monat",
+      "proCta": "Gratisphase starten",
+      "p1": "Unbegrenzte Analysen",
+      "p2": "Erweiterte Risikobewertung",
+      "p3": "Priorisierte KI-Verarbeitung",
+      "p4": "Alle 13 Sprachen",
+      "p5": "Berichte exportieren",
+      "p6": "E-Mail-Support",
+      "ent": "Unternehmen",
+      "entPrice": "Individuell",
+      "entCta": "Vertrieb kontaktieren",
+      "e1": "Alles aus Pro",
+      "e2": "API-Zugang",
+      "e3": "Individuelle Integrationen",
+      "e4": "Persönlicher Support",
+      "e5": "Team-Zusammenarbeit",
+      "e6": "White-Label-Option"
+    },
+    "cta": {
+      "title1": "Bereit für bessere",
+      "title2": "Investmententscheidungen?",
+      "subtitle": "Schließen Sie sich Tausenden Investoren an, die weltweit Immobilien mit KI analysieren.",
+      "button": "Jetzt kostenlos starten",
+      "note": "Keine Kreditkarte nötig"
+    },
+    "footer": {
+      "privacy": "Datenschutz",
+      "terms": "Nutzungsbedingungen",
+      "contact": "Kontakt",
+      "rights": "© {year} Property Check. Alle Rechte vorbehalten."
+    },
+    "legal": {
+      "privacyTitle": "Datenschutz",
+      "privacy1": "Wir speichern nur das für den Betrieb Nötige: Ihren Namen und Ihre E-Mail-Adresse, einen bcrypt-Hash Ihres Passworts, Ihre angelegten Objekte und die Anzahl der durchgeführten Analysen.",
+      "privacy2": "Hochgeladene Objektdokumente werden zur Datenextraktion und Analyseerstellung an Anthropic (Claude API) übermittelt. Wir verkaufen Ihre Daten nicht.",
+      "privacy3": "Ihre Objektliste wird zusätzlich im Browser (localStorage) zwischengespeichert und auf unserem Server gespeichert — nach der Anmeldung ist sie auch auf anderen Geräten verfügbar.",
+      "privacy4": "Eine schriftliche Anfrage an hello@property-check.com — und Ihr Konto inklusive aller Daten wird gelöscht.",
+      "termsTitle": "Nutzungsbedingungen",
+      "terms1": "Property Check ist ein KI-Rechercheassistent. Er liefert Informationen, keine Finanz-, Rechts- oder Steuerberatung, und ist kein zertifiziertes Wertgutachten.",
+      "terms2": "Marktzahlen sind Schätzungen aus offenen Quellen und können veraltet sein — prüfen Sie sie vor der Unterschrift anhand der DLD-Transaktionen und des SPA.",
+      "terms3": "Der Dienst wird „wie gesehen“ bereitgestellt. Wir haften nicht für Anlageentscheidungen, die auf Basis der Analyse getroffen werden.",
+      "terms4": "Während der Beta erhalten registrierte Nutzer unbegrenzte Analysen; anonyme Nutzer haben ein begrenztes Kontingent pro Gerät."
+    }
   }
 }

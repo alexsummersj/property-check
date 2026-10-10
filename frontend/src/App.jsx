@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './LandingPage';
 import RealEstateAgent from './real_estate_agent';
 import SharedReport from './SharedReport';
+import { LanguageProvider } from './i18n/LanguageContext';
 
 // Хеш — источник правды о том, что показывать: #app — приложение, #a/<id> — публичный
 // отчёт по ссылке, всё остальное — лендинг. Без хеша сразу пускаем в приложение только
@@ -19,6 +20,8 @@ const readView = () => {
   // Ссылка сброса пароля (#reset/<token>) — тоже приложение: модалка сама подхватит токен
   if (hash.startsWith('#reset/')) return 'app';
   if (readShareId()) return 'share';
+  // Якоря лендинга (#features, #pricing) не должны выбрасывать залогиненного в приложение
+  if (/^#(features|how-it-works|pricing)$/.test(hash)) return 'landing';
   try {
     return localStorage.getItem('property_check_token') ? 'app' : 'landing';
   } catch { return 'landing'; }
@@ -48,15 +51,14 @@ function App() {
     else window.location.hash = '#landing';
   };
 
-  if (view === 'app') {
-    return <RealEstateAgent onBackToLanding={handleBackToLanding} />;
-  }
+  const screen = view === 'app'
+    ? <RealEstateAgent onBackToLanding={handleBackToLanding} />
+    : view === 'share'
+      ? <SharedReport shareId={shareId} onEnterApp={handleEnterApp} />
+      : <LandingPage onEnterApp={handleEnterApp} />;
 
-  if (view === 'share') {
-    return <SharedReport shareId={shareId} onEnterApp={handleEnterApp} />;
-  }
-
-  return <LandingPage onEnterApp={handleEnterApp} />;
+  // Язык один на все экраны: лендинг, приложение и публичный отчёт
+  return <LanguageProvider>{screen}</LanguageProvider>;
 }
 
 export default App;

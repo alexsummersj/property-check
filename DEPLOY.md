@@ -203,3 +203,22 @@ ssh root@SERVER "tr -d '\r' < /usr/local/bin/pc-backup.sh > /tmp/pb && mv /tmp/p
 
 Rollback: `git reset --hard a2a188e` (before share links) + rebuild + restart. `shares.json` is additive — old builds
 ignore it, and already sent links answer 404 until the code is back.
+
+## Deploy v3.7 note (landing page in 13 languages)
+
+Frontend only: no new endpoints, no new npm dependencies, no data files. `npm ci` is not required, `npm run build`
+is enough (restart of PM2 is harmless but unnecessary).
+
+```bash
+cd /var/www/property-check
+git pull --ff-only
+cd frontend && npm run i18n:check && npm run build && cd ..
+curl -s http://127.0.0.1:3001/api/health
+```
+
+What to look at in the build output: the dictionaries are inlined, so the bundle grows with every language
+(v3.6: 350 kB / 109.7 kB gzipped; the landing adds ~100 keys per language). If it gets past ~600 kB raw, the next
+step is lazy-loading `frontend/src/i18n/<lang>.json` instead of importing all 13 in `i18n/index.js`.
+
+Rollback: `git reset --hard ef1793c` (before the landing i18n) + `npm run build`. The change is display-only, no
+data or API contract is involved.

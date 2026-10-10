@@ -216,9 +216,10 @@ cd frontend && npm run i18n:check && npm run build && cd ..
 curl -s http://127.0.0.1:3001/api/health
 ```
 
-What to look at in the build output: the dictionaries are inlined, so the bundle grows with every language
-(v3.6: 350 kB / 109.7 kB gzipped; the landing adds ~100 keys per language). If it gets past ~600 kB raw, the next
-step is lazy-loading `frontend/src/i18n/<lang>.json` instead of importing all 13 in `i18n/index.js`.
+What to look at in the build output: the dictionaries are inlined, so the bundle grows with every language.
+v3.6 was 350 kB / 109.7 kB gzipped, v3.7 (landing) is **420.7 kB / 133.9 kB gzipped** — still one request, but if it
+keeps growing the next step is lazy-loading `frontend/src/i18n/<lang>.json` instead of importing all 13 in
+`i18n/index.js`.
 
 Rollback: `git reset --hard ef1793c` (before the landing i18n) + `npm run build`. The change is display-only, no
 data or API contract is involved.

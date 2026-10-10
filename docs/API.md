@@ -196,5 +196,6 @@ A saved report can be published as a link a broker sends to a client — opening
 - The chosen language is still stored under `real_estate_language`, so a visitor who picks Русский on the landing lands in a Russian app. On a first visit `detectLanguage()` uses the browser language, and `document.documentElement` gets both `dir` (rtl for Arabic) and `lang` on every screen — before, RTL was only applied inside the app.
 - `getTranslation(lang, path, params)` interpolates `{placeholders}` (used for the year in `landing.footer.rights`).
 - Landing anchors `#features`, `#how-it-works`, `#pricing` are now recognized by the hash router; previously a signed-in user clicking one was thrown into the app.
+- Production bundle: 350 kB → 420.7 kB raw, 109.7 kB → 133.9 kB gzipped (13 dictionaries × 224 keys are still inlined in one chunk).
 - Translations are machine made: `ru/ar/zh/ja/fr/es/de/it` are idiomatic, `th` follows the existing Thai file, `cs/kk/ka` follow the Latin-transliteration convention of this repo. All of them still worth a native proofread.
 

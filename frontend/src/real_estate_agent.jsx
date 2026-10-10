@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download, Share2 } from 'lucide-react';
-import { useLanguage, useT } from './i18n/LanguageContext';
+import { useLanguage, useT, LanguageSelector } from './i18n/LanguageContext';
 import MarkdownLite from './MarkdownLite';
 
 // Auth constants

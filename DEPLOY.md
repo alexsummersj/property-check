@@ -142,6 +142,10 @@ fields; anyone who reset their password after this deploy simply signs in again.
 
 ## Tests & backup drill (v3.4)
 
+**i18n check** — `cd frontend && npm run i18n:check` (`scripts/check-i18n.mjs`) compares every dictionary with
+`en.json` and fails on a missing or extra key; it runs in CI before the frontend build. Add new UI strings to
+`en.json` **and** to all 13 files in `frontend/src/i18n/`, otherwise the check stops the build.
+
 **Smoke suite** — `tests/smoke.mjs` (npm script `test:smoke`), ~35 checks over health, auth, quota, properties,
 saved analyses and password reset. It never calls Claude unless `SMOKE_AI=1`, and it only touches a throwaway
 account plus its own ids, so it is safe against production:

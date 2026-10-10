@@ -181,3 +181,11 @@ A saved report can be published as a link a broker sends to a client — opening
 - `DELETE /api/analyzes/<propertyId>` also revokes the links of that property and answers `{ success, revokedShares }`.
 - Storage: `shares.json` (atomic writes, included in the daily backup) keeps a **snapshot** of the text, not a pointer — the link survives report regeneration, and nothing but name and location of the property card leaks.
 - Frontend: the "Share" button in the results header creates the link and shows it ready to copy. The public page `https://property-check.com/#a/<id>` (`SharedReport.jsx`) renders the report with the property header, mode chip, saved date, view counter and an "Analyze my property" call to action. Its language follows the report (`language` stored with the analysis), otherwise the browser language; untranslated keys fall back to English.
+
+## Revision v3.6 (auth modal i18n, all 13 languages)
+
+- The auth modal (sign in / sign up / forgot / reset / sent), the app header title and the "Sign In" button no longer contain hard-coded English — everything goes through `t()` (`auth.*`, `header.*`).
+- `auth.*` (38 keys), `shared.*`, `analysis.share*`, `analysis.savedOn/refresh/copy/copied/download/stop` and `header.backToSite` are now present in **all 13** dictionaries in `frontend/src/i18n/`. `cs/kk/ka` follow the existing convention of this repo — Latin transliteration rather than native script. Translations are machine made and worth a proofread by native speakers.
+- `frontend/scripts/check-i18n.mjs` (npm `i18n:check`) compares every dictionary with `en.json` and exits non-zero on a missing or extra key; CI runs it before `npm run build`. This is what caught `header.backToSite` and `analysis.stop`, which had silently fallen back to English in 11 languages since v3.2.
+- Production bundle grew from 318 kB to 350 kB (98.9 kB → 109.7 kB gzipped) because the previously missing translations are now inlined.
+

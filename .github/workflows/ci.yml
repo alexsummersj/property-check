@@ -21,6 +21,7 @@ jobs:
         working-directory: frontend
         run: |
           npm ci --no-audit --no-fund
+          node scripts/check-i18n.mjs
           npm run build
       - name: API smoke tests (no Claude calls)
         env:

@@ -240,6 +240,14 @@ New files: `frontend/src/print.css` (A4 `@page` + `@media print` overrides), `fr
 UI). The **PDF** button in the Results toolbar and on the public share page just opens the browser print dialog —
 there is nothing to monitor on the server, exports are client side.
 
+Measured on production after the deploy (`gzip -9` in `frontend/dist/assets`):
+`index-tvxh_tyC.js` 429.8 kB raw / 135.2 kB gzipped, `index-B8tH4gxO.css` 61.5 kB raw / 8.8 kB gzipped. Against v3.7
+(420.7 kB / 133.9 kB gzipped) the JS grew by ~9 kB raw and ~1.3 kB gzipped — the print sheet, the 7 new translation
+keys and ~40 lines of print CSS; there is no print/PDF library in the bundle at all.
+
+Verified in the served assets: `@page{size:A4;margin:15mm 14mm}`, both `@media print` blocks, `.print-sheet`,
+`.print-light`, `.no-print`, `print\:hidden`, `print\:block`, and in the JS — `afterprint` + `.print()`.
+
 Manual check after the deploy (the dialog cannot be verified by CI):
 1. Open a saved report → **PDF** → in the dialog choose “Save as PDF”: the preview must be black on white, without the
    dark interface, with the summary table, the risk block and the report text.

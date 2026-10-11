@@ -81,7 +81,9 @@
     "shareAgain": "Bala bmulichi",
     "shareHint": "Sakzhvaro bmulis sheqmna — angarishs nakhavs netsniera, shesla arot shesvla",
     "shareReady": "Sakzhvaro bmulichi — mokhobs, skan objekts ara gamqdga",
-    "stop": "Shecheva"
+    "stop": "Shecheva",
+    "pdf": "PDF",
+    "pdfHint": "Angarshis bebdva an PDF-ad shenakhuleba"
   },
   "shared": {
     "title": "Uqrneulis analizs",
@@ -270,5 +272,12 @@
       "terms3": "Momsaxurebloba yofila «rogor aris». Chver ver vipirdebT analizeze fukhnbav investiciur gadasckhvitebebis.",
       "terms4": "Beta periodebshi darchenuli modzraobebs shesazRudrebeli analizebi aqvt; anonimur modzraobebs moxenuli raodenoba moqvtT moqanulze."
     }
+  },
+  "print": {
+    "header": "udzravlis analizis angarishi",
+    "summary": "udzravlis monacedebis miaketeba",
+    "paymentPlan": "gadahadis grafiki",
+    "printedOn": "bebdvis tairi",
+    "disclaimer": "AI-s mier geneirebuli analizi — ar aris individualuri investiciuli rexevna."
   }
 }

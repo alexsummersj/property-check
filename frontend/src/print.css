@@ -1,0 +1,41 @@
+/* Печать отчёта в PDF (кнопка «PDF» или Ctrl+P). Интерфейс тёмный, поэтому в печать идёт
+   отдельный светлый лист: .print-sheet (PrintReport.jsx) для приложения и .print-light для
+   публичной страницы. Экран при этом скрывается классом print:hidden (Tailwind-вариант). */
+@page { size: A4; margin: 15mm 14mm; }
+
+@media print {
+  html, body { background: #fff !important; }
+
+  /* overflow-x: hidden в index.html иначе обрезает отчёт до одной страницы */
+  html, body { overflow: visible !important; height: auto !important; }
+
+  /* Шапка, кнопки и модалки в PDF не нужны */
+  .no-print { display: none !important; }
+
+  .print-sheet,
+  .print-sheet *,
+  .print-light,
+  .print-light * {
+    color: #111827 !important;
+    background: transparent !important;
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-sheet { font-size: 11pt; line-height: 1.55; }
+
+  .print-sheet h1, .print-sheet h2, .print-sheet h3,
+  .print-light h1, .print-light h2, .print-light h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .print-sheet tr, .print-sheet li, .print-sheet pre, .print-sheet blockquote,
+  .print-sheet .avoid-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-sheet a, .print-light a { text-decoration: none; }
+}

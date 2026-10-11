@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Building2, Loader2, AlertCircle, MapPin, Eye } from 'lucide-react';
+import { ArrowLeft, Building2, Loader2, AlertCircle, MapPin, Eye, Printer } from 'lucide-react';
 import MarkdownLite from './MarkdownLite';
 import { getTranslation } from './i18n';
+import { printAsPdf, reportFileName } from './print';
 
 // Публичная страница отчёта: открывается по ссылке /#a/<id> без входа в аккаунт.
 // Ключи подписи режима совпадают с ANALYSIS_MODES в real_estate_agent.jsx.
@@ -62,15 +63,22 @@ export default function SharedReport({ shareId, onEnterApp }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-      <div className="bg-black/30 backdrop-blur-md border-b border-white/10">
+      <div className="bg-black/30 backdrop-blur-md border-b border-white/10 no-print">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-lg font-semibold">{t('shared.title')}</h1>
             <p className="text-xs text-gray-400">{t('shared.subtitle')}</p>
           </div>
-          <button onClick={onEnterApp} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" />{t('shared.analyzeYours')}
-          </button>
+          <div className="flex items-center gap-2">
+            {share && (
+              <button onClick={() => printAsPdf(reportFileName(share.title, share.mode))} className="flex items-center gap-2 px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition" title={t('analysis.pdfHint')}>
+                <Printer className="w-4 h-4" /><span className="hidden sm:inline">{t('analysis.pdf')}</span>
+              </button>
+            )}
+            <button onClick={onEnterApp} className="px-3 py-2 text-sm bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />{t('shared.analyzeYours')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -92,7 +100,7 @@ export default function SharedReport({ shareId, onEnterApp }) {
         )}
 
         {!loading && share && (
-          <article className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+          <article className="print-light bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
             <header className="mb-6 pb-5 border-b border-white/10">
               <h2 className="text-xl md:text-2xl font-bold flex items-start gap-2">
                 <Building2 className="w-5 h-5 mt-1 shrink-0 text-blue-400" />

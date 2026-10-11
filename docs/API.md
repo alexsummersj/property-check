@@ -199,3 +199,18 @@ A saved report can be published as a link a broker sends to a client — opening
 - Production bundle: 350 kB → 420.7 kB raw, 109.7 kB → 133.9 kB gzipped (13 dictionaries × 224 keys are still inlined in one chunk).
 - Translations are machine made: `ru/ar/zh/ja/fr/es/de/it` are idiomatic, `th` follows the existing Thai file, `cs/kk/ka` follow the Latin-transliteration convention of this repo. All of them still worth a native proofread.
 
+## Revision v3.8 (report export — print to PDF)
+
+Export without new dependencies (`frontend/src/print.css`, `print.js`, `ReportPrint.jsx`):
+
+- Results toolbar gained a **PDF** button (next to Markdown): it opens the browser print dialog (`window.print()`), where the user picks “Save as PDF”. Nothing is downloaded from the server, the bundle did not grow.
+- Printing does not print the dark UI: while `view === 'app'` the screen is wrapped in `print:hidden`, and a separate light A4 sheet is printed instead — header (property, mode, saved date), the custom question, a summary table (price, price/m² or price/sq.ft, area, developer, completion, payment plan), the Risk Score block with factors and recommendations, the markdown body, and a footer with the print date and an “AI analysis, not investment advice” line.
+- The sheet is rendered by `App.jsx`, not inside the app, because it must outlive the screen it prints; the app publishes the current report upward through the `onPrintDoc` prop. `useT` is now `useCallback`-stable so that publishing effect does not loop.
+- `@page { size: A4; margin: 15mm 14mm }`, `break-after: avoid` on headings, `break-inside: avoid` on table rows, list items, quotes and code blocks. Backgrounds are dropped inside the sheet (`background: transparent !important`) so the report prints black on white.
+- Why the print dialog and not `jsPDF`/`html2canvas`: the built-in fonts of `jsPDF` cannot render Arabic, Thai, Georgian or CJK (and Arabic needs shaping, which `jsPDF` does not do), while the browser already has the fonts and the RTL layout of the rendered DOM — 13 languages come out right for free, and the text stays selectable. `html2canvas` would have added ~550 kB for a rasterised, non-selectable PDF. A server-side headless Chromium (one-click download, PDF by e-mail) is the optional next step — the droplet has 32 GB RAM but no Chromium installed yet.
+- The public share page (`#a/<id>`) is printable too: its header and CTA are `no-print`, the article is `.print-light` (black on white), and the top bar has the same PDF button.
+- New i18n keys: `analysis.pdf`, `analysis.pdfHint`, `print.header`, `print.summary`, `print.paymentPlan`, `print.printedOn`, `print.disclaimer` — 231 keys per language.
+- The PDF file name comes from `document.title`, which is temporarily replaced with `<property>-<mode>` and restored on `afterprint`.
+
+Rollback: `git reset --hard df6483b` (before the PDF export) + `npm run build`. Frontend only, no backend and no dependency changes.
+

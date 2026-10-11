@@ -81,7 +81,9 @@
     "shareAgain": "Link erneut",
     "shareHint": "Öffentlichen Link erstellen — jeder kann diesen Bericht lesen, ohne Anmeldung",
     "shareReady": "Öffentlicher Link — gültig, bis die Immobilie gelöscht wird",
-    "stop": "Stopp"
+    "stop": "Stopp",
+    "pdf": "PDF",
+    "pdfHint": "Bericht drucken oder als PDF speichern"
   },
   "shared": {
     "title": "Immobilienanalyse",
@@ -270,5 +272,12 @@
       "terms3": "Der Dienst wird „wie gesehen“ bereitgestellt. Wir haften nicht für Anlageentscheidungen, die auf Basis der Analyse getroffen werden.",
       "terms4": "Während der Beta erhalten registrierte Nutzer unbegrenzte Analysen; anonyme Nutzer haben ein begrenztes Kontingent pro Gerät."
     }
+  },
+  "print": {
+    "header": "Immobilienanalyse-Bericht",
+    "summary": "Objektübersicht",
+    "paymentPlan": "Zahlungsplan",
+    "printedOn": "Gedruckt am",
+    "disclaimer": "KI-generierte Analyse — keine individuelle Anlageberatung."
   }
 }

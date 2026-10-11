@@ -81,7 +81,9 @@
     "shareAgain": "Odkaz znovu",
     "shareHint": "Vytvorit verejny odkaz — kdokoli ji muze prectist bez prihlaseni",
     "shareReady": "Verejny odkaz — plati, dokud nemovitost nesma zate",
-    "stop": "Zastavit"
+    "stop": "Zastavit",
+    "pdf": "PDF",
+    "pdfHint": "Vytisknout zpravu nebo ulozit jako PDF"
   },
   "shared": {
     "title": "Analyza nemovitosti",
@@ -270,5 +272,12 @@
       "terms3": "Sluzba je poskytovana „jak je“. Neodpovidame za investicni rozhodnuti ucinedna na zaklade analyzy.",
       "terms4": "Behem bety maji registrovaní uzivatele neomezene analyzy; anonymni uzivatele maji omezeny pocet na zarizeni."
     }
+  },
+  "print": {
+    "header": "Zprava o analyze nemovitosti",
+    "summary": "Prehled nemovitosti",
+    "paymentPlan": "Splatkovy plan",
+    "printedOn": "Vytisknuto",
+    "disclaimer": "Analyzu vytvorila AI — nejde o individualni investicni doporuceni."
   }
 }

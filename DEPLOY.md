@@ -223,3 +223,28 @@ keeps growing the next step is lazy-loading `frontend/src/i18n/<lang>.json` inst
 
 Rollback: `git reset --hard ef1793c` (before the landing i18n) + `npm run build`. The change is display-only, no
 data or API contract is involved.
+
+## Deploy v3.8 note (report export: print to PDF)
+
+Frontend only: no new npm dependencies, no new endpoints, no data files. `npm run build` is enough.
+
+```bash
+cd /var/www/property-check
+git pull --ff-only
+cd frontend && npm run i18n:check && npm run build && cd ..
+curl -s http://127.0.0.1:3001/api/health
+```
+
+New files: `frontend/src/print.css` (A4 `@page` + `@media print` overrides), `frontend/src/print.js`
+(`printAsPdf()` + `reportFileName()`), `frontend/src/ReportPrint.jsx` (the light A4 sheet printed instead of the dark
+UI). The **PDF** button in the Results toolbar and on the public share page just opens the browser print dialog —
+there is nothing to monitor on the server, exports are client side.
+
+Manual check after the deploy (the dialog cannot be verified by CI):
+1. Open a saved report → **PDF** → in the dialog choose “Save as PDF”: the preview must be black on white, without the
+   dark interface, with the summary table, the risk block and the report text.
+2. Switch to Arabic and print again — the sheet must be right-to-left and the file name still `<property>-<mode>`.
+3. `Ctrl+P` on a public share link `#a/<id>` must print the article only (no header, no CTA buttons).
+
+Rollback: `git reset --hard df6483b` (before the PDF export) + `npm run build`.
+

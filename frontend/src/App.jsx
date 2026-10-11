@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import LandingPage from './LandingPage';
 import RealEstateAgent from './real_estate_agent';
 import SharedReport from './SharedReport';
+import ReportPrint from './ReportPrint';
 import { LanguageProvider } from './i18n/LanguageContext';
 
 // Хеш — источник правды о том, что показывать: #app — приложение, #a/<id> — публичный
@@ -30,6 +31,10 @@ const readView = () => {
 function App() {
   const [view, setView] = useState(readView);
   const [shareId, setShareId] = useState(readShareId);
+  // Печатный лист живёт здесь, а не внутри приложения: экран тёмный, с модалками и
+  // прокруткой, а в PDF нужен чистый светлый A4. Приложение само кладёт текущий отчёт.
+  const [printDoc, setPrintDoc] = useState(null);
+  const handlePrintDoc = useMemo(() => (doc) => setPrintDoc(doc), []);
 
   useEffect(() => {
     const onHashChange = () => { setView(readView()); setShareId(readShareId()); };
@@ -37,7 +42,7 @@ function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  useEffect(() => { window.scrollTo(0, 0); }, [view]);
+  useEffect(() => { window.scrollTo(0, 0); setPrintDoc(null); }, [view]);
 
   const handleEnterApp = () => {
     try { localStorage.setItem('hasVisited', 'true'); } catch {}
@@ -52,13 +57,19 @@ function App() {
   };
 
   const screen = view === 'app'
-    ? <RealEstateAgent onBackToLanding={handleBackToLanding} />
+    ? <RealEstateAgent onBackToLanding={handleBackToLanding} onPrintDoc={handlePrintDoc} />
     : view === 'share'
       ? <SharedReport shareId={shareId} onEnterApp={handleEnterApp} />
       : <LandingPage onEnterApp={handleEnterApp} />;
 
-  // Язык один на все экраны: лендинг, приложение и публичный отчёт
-  return <LanguageProvider>{screen}</LanguageProvider>;
+  // Печатный лист подменяет только приложение (и только когда отчёт есть): публичный
+  // отчёт #a/<id> печатается своим светлым макетом, лендинг в печати не нужен.
+  return (
+    <LanguageProvider>
+      <div className={view === 'app' && printDoc ? 'print:hidden' : ''}>{screen}</div>
+      <ReportPrint doc={printDoc} />
+    </LanguageProvider>
+  );
 }
 
 export default App;

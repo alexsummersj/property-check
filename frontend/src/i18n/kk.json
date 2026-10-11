@@ -81,7 +81,9 @@
     "shareAgain": "Siltmeni qaita jasau",
     "shareHint": "Ashyq silteme jasau — esepti tirkelmey-a kezegi adam oqi aladi",
     "shareReady": "Ashyq silteme — nyisan joyılğansha jumsaladi",
-    "stop": "Toqtatu"
+    "stop": "Toqtatu",
+    "pdf": "PDF",
+    "pdfHint": "Esepti basshyz nemese PDF retinde saqtañyz"
   },
   "shared": {
     "title": "Nyisan taldauy",
@@ -270,5 +272,12 @@
       "terms3": "Qyzmet «bar mynyty» jüzesinde üsyniledi. Taldau negizinde qabyldanğan investiciyalyq sheshimder üshin jawap bermeymiz.",
       "terms4": "Beta kezinde tirkelgen paidalanushylar shekteulmegen taldau alady; anonim paidalanushylarğa qurılma sanağı shekteulı."
     }
+  },
+  "print": {
+    "header": "Mulik taldau esebi",
+    "summary": "Mulik týraly qysqasha",
+    "paymentPlan": "Tölem kesteşi",
+    "printedOn": "Basylğan künü",
+    "disclaimer": "AI jasasağan taldau — jeke investiciyalyq keñes emes."
   }
 }

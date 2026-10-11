@@ -81,7 +81,9 @@
     "shareAgain": "Un altro link",
     "shareHint": "Crea un link pubblico — chiunque può leggere questo report, senza login",
     "shareReady": "Link pubblico — funziona finché l'immobile non viene eliminato",
-    "stop": "Ferma"
+    "stop": "Ferma",
+    "pdf": "PDF",
+    "pdfHint": "Stampa il report o salvalo come PDF"
   },
   "shared": {
     "title": "Analisi dell'immobile",
@@ -270,5 +272,12 @@
       "terms3": "Il servizio è fornito «così com’è». Non siamo responsabili delle decisioni di investimento prese sulla base dell’analisi.",
       "terms4": "Durante la beta gli utenti registrati hanno analisi illimitate; gli utenti anonimi dispongono di un numero limitato per dispositivo."
     }
+  },
+  "print": {
+    "header": "Report di analisi immobiliare",
+    "summary": "Scheda dell’immobile",
+    "paymentPlan": "Piano di pagamento",
+    "printedOn": "Stampato il",
+    "disclaimer": "Analisi generata dall’IA — non è un consiglio di investimento personalizzato."
   }
 }

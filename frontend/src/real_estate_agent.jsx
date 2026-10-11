@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download, Share2 } from 'lucide-react';
+import { Building2, TrendingUp, AlertCircle, MapPin, Calendar, FileText, Search, Upload, Loader2, CheckCircle, X, Plus, FileUp, File, Trash2, Shield, RefreshCw, ChevronDown, ChevronUp, FolderOpen, Edit3, Check, Globe, ArrowLeft, Square, Copy, Download, Share2, Printer } from 'lucide-react';
 import { useLanguage, useT, LanguageSelector } from './i18n/LanguageContext';
 import MarkdownLite from './MarkdownLite';
+import { printAsPdf, reportFileName } from './print';
 
 // Auth constants
 const FREE_ANALYSIS_LIMIT = 3;
@@ -807,7 +808,7 @@ const UploadModal = ({
 };
 
 // Main Component
-const RealEstateAgentContent = ({ onBackToLanding }) => {
+const RealEstateAgentContent = ({ onBackToLanding, onPrintDoc }) => {
   const t = useT();
   const { language } = useLanguage();
 
@@ -1591,6 +1592,31 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
       : (currentProperty.price / currentProperty.size).toFixed(0)  // цена за sqft
   ) : 0;
 
+  // Печатный лист (PDF) лежит в App.jsx: экран тёмный и с прокруткой, а для печати нужен
+  // чистый светлый A4. Сюда отдаём ровно то, что сейчас показано в Results.
+  useEffect(() => {
+    if (!onPrintDoc) return;
+    if (!analysis || loading || !currentProperty) { onPrintDoc(null); return; }
+    const risk = risks[currentProperty.id] || null;
+    const summary = [
+      { label: t('objects.price'), value: formatPrice(currentProperty.price, currentProperty.location) },
+      { label: useMetric ? t('stats.pricePerSqm') : t('stats.pricePerSqft'), value: formatPrice(pricePerUnit, currentProperty.location) },
+      { label: t('labels.area'), value: formatArea(currentProperty.size, currentProperty.location, currentProperty.sizeUnits) },
+      { label: t('stats.developer'), value: currentProperty.developer },
+      { label: t('objects.completion'), value: currentProperty.completion },
+      ...(currentProperty.paymentPlan ? [{ label: t('print.paymentPlan'), value: currentProperty.paymentPlan }] : [])
+    ];
+    onPrintDoc({ property: currentProperty, risk, analysis, analysisInfo, summary });
+  }, [analysis, analysisInfo, loading, currentProperty, risks, onPrintDoc, t, useMetric, pricePerUnit]);
+
+  // «PDF» = диалог печати браузера, в котором пользователь выбирает «Сохранить как PDF».
+  // Шрифты и разбивку на страницы делает браузер, поэтому кириллица, арабский (RTL),
+  // тайский, грузинский и CJK выходят без встраивания шрифтов в бандл.
+  const printAnalysis = () => {
+    if (!analysis || loading) return;
+    printAsPdf(reportFileName(currentProperty?.name, analysisInfo?.mode));
+  };
+
   // Empty state
   if (properties.length === 0) {
     return (
@@ -1902,6 +1928,10 @@ const RealEstateAgentContent = ({ onBackToLanding }) => {
                     <button onClick={downloadAnalysis} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
                       <Download className="w-3.5 h-3.5" />
                       {t('analysis.download')}
+                    </button>
+                    <button onClick={printAnalysis} title={t('analysis.pdfHint')} className="flex items-center gap-1 px-3 py-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition">
+                      <Printer className="w-3.5 h-3.5" />
+                      {t('analysis.pdf')}
                     </button>
                     <button
                       onClick={shareAnalysis}

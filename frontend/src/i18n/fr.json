@@ -81,7 +81,9 @@
     "shareAgain": "Nouveau lien",
     "shareHint": "Créer un lien public — n'importe qui peut lire ce rapport, sans connexion",
     "shareReady": "Lien public — valable tant que le bien n'est pas supprimé",
-    "stop": "Arrêter"
+    "stop": "Arrêter",
+    "pdf": "PDF",
+    "pdfHint": "Imprimer le rapport ou l’enregistrer en PDF"
   },
   "shared": {
     "title": "Analyse du bien",
@@ -270,5 +272,12 @@
       "terms3": "Le service est fourni « en l’état ». Nous ne sommes pas responsables des décisions d’investissement prises sur la base de l’analyse.",
       "terms4": "Pendant la bêta, les utilisateurs inscrits bénéficient d’analyses illimitées ; les utilisateurs anonymes disposent d’un quota limité par appareil."
     }
+  },
+  "print": {
+    "header": "Rapport d’analyse immobilière",
+    "summary": "Fiche du bien",
+    "paymentPlan": "Plan de paiement",
+    "printedOn": "Imprimé le",
+    "disclaimer": "Analyse générée par IA — pas un conseil en investissement personnalisé."
   }
 }

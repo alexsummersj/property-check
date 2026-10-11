@@ -2,7 +2,7 @@
 // из-за чего лендинг и публичный отчёт не имели доступа к переводам. Провайдер подключается
 // один раз в App.jsx и оборачивает все экраны, язык хранится в том же localStorage ключе,
 // что использовало приложение, поэтому выбор языка на лендинге действует и внутри приложения.
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { languages, getTranslation, detectLanguage, LANGUAGE_STORAGE_KEY } from './index';
 
@@ -14,10 +14,12 @@ export const useLanguage = () => {
   return context;
 };
 
-// t('risk.low') и t('footer.rights', { year: 2026 })
+// t('risk.low') и t('footer.rights', { year: 2026 }). Функция стабильна пока не сменился
+// язык — её можно класть в зависимости useEffect (печатный лист пересобирается по-русски
+// или по-арабски только когда реально сменился язык).
 export const useT = () => {
   const { language } = useLanguage();
-  return (path, params) => getTranslation(language, path, params);
+  return useCallback((path, params) => getTranslation(language, path, params), [language]);
 };
 
 export const LanguageProvider = ({ children }) => {

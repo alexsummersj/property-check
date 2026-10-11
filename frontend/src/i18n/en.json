@@ -81,7 +81,9 @@
     "share": "Share",
     "shareAgain": "Link again",
     "shareHint": "Create a public link — anyone with it can read this report, no sign-in needed",
-    "shareReady": "Public link — works until the property is deleted"
+    "shareReady": "Public link — works until the property is deleted",
+    "pdf": "PDF",
+    "pdfHint": "Print the report or save it as PDF"
   },
   "shared": {
     "title": "Property analysis",
@@ -270,5 +272,12 @@
       "terms3": "The service is provided \"as is\". We are not responsible for investment decisions made on the basis of the analysis.",
       "terms4": "During the beta, registered users get unlimited analyses; anonymous users get a limited number per device."
     }
+  },
+  "print": {
+    "header": "Property analysis report",
+    "summary": "Property summary",
+    "paymentPlan": "Payment plan",
+    "printedOn": "Printed",
+    "disclaimer": "AI-generated analysis. Not individual investment advice."
   }
 }

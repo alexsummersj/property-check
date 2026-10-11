@@ -81,7 +81,9 @@
     "shareAgain": "Otro enlace",
     "shareHint": "Crea un enlace público — cualquiera puede leer este informe, sin registrarse",
     "shareReady": "Enlace público — funciona hasta que borres la propiedad",
-    "stop": "Detener"
+    "stop": "Detener",
+    "pdf": "PDF",
+    "pdfHint": "Imprimir el informe o guardarlo como PDF"
   },
   "shared": {
     "title": "Análisis del inmueble",
@@ -270,5 +272,12 @@
       "terms3": "El servicio se presta «tal cual». No nos hacemos responsables de las decisiones de inversión tomadas a partir del análisis.",
       "terms4": "Durante la beta, los usuarios registrados realizan análisis ilimitados; los usuarios anónimos disponen de un número limitado por dispositivo."
     }
+  },
+  "print": {
+    "header": "Informe de análisis inmobiliario",
+    "summary": "Resumen del inmueble",
+    "paymentPlan": "Plan de pagos",
+    "printedOn": "Impreso el",
+    "disclaimer": "Análisis generado por IA. No es un consejo de inversión personalizado."
   }
 }
